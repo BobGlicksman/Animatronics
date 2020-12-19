@@ -75,7 +75,8 @@ manual for a candidate MP3 player for this project.
 #### AnimatronicMouthTest.ino:  
 Photon source firmware for testing out a robotic mouth driven
 by a servo. Pin connections are for the Team Practical Projects "Wireless I/O Board"
-(). The data array included in this sorce code file is the data from the spreadsheet
+(https://github.com/TeamPracticalProjects/Wireless_IO_Board). 
+The data array included in this sorce code file is the data from the spreadsheet
 "Welcome_Waveform_High_Data.xlsx" in the "Data" folder of this repository.
 
 #### workspace.code-workspace: 
