@@ -39,35 +39,43 @@ MP3 board --> analog processing circuit --> Photon ADC --> Photon firmware proce
 Additionally:
 Sensor (TBD) --> Photon --> firmware --> Photon Tx/Rx ---> MP3 board track select and control
 
-## Repository contents:
+## Repository contents.
 ### Data.
-AnimatronicMouth.mp4: this is a video of the mouth movement (roughly) in sync with
+#### AnimatronicMouth.mp4: 
+this is a video of the mouth movement (roughly) in sync with
 a sound file.  The video and sound start at about 10 seconds into the video and end
 about 4 seconds later.
 
-Welcome_Waveform_High_Data.xlsx:  This is a spreadsheet containing 201 samples of the
+#### Welcome_Waveform_High_Data.xlsx:  
+This is a spreadsheet containing 201 samples of the
 envelope of the voice file, each sample at a 20 ms interval (~ 4 seconds of data).
 
-Welcome_high.wav:  the voice data file that is input to the analog processing circuit that
+#### Welcome_high.wav:  
+the voice data file that is input to the analog processing circuit that
 produces the envelope information.
 
 ### Documents.
-Analog Processor Analysis.pptx:  MS Powerpoint file that shows the analog processing circuit, the 
+#### Analog Processor Analysis.pptx:  
+MS Powerpoint file that shows the analog processing circuit, the 
 concept (block diagram) for the circuit, and Spice simulation and analysis.  Produced using LTSpice.
 
 ### Hardware.
-Analog.asc: LTSpice file of the analog processing circuit with simple sine wave input.
+#### Analog.asc: 
+LTspice file of the analog processing circuit with simple sine wave input.
 
-Analog_wavefile_input.asc:  LTSpice file of the analog processing circuit with input from a
-.wav file.
+#### Analog_wavefile_input.asc:  
+LTspice file of the analog processing circuit with input from a .wav file.
 
-DFPlayer Mini Manual.pdf:  manual for a candidate MP3 player for this project.
+#### DFPlayer Mini Manual.pdf:  
+manual for a candidate MP3 player for this project.
 
 ### Software/Photon Firmware/AnimatronicMouthTest/src.
-AnimatronicMouthTest.ino:  Photon source firmware for testing out a robotic mouth driven
+#### AnimatronicMouthTest.ino:  
+Photon source firmware for testing out a robotic mouth driven
 by a servo. Pin connections are for the Team Practical Projects "Wireless I/O Board"
 (). The data array included in this sorce code file is the data from the spreadsheet
 "Welcome_Waveform_High_Data.xlsx" in the "Data" folder of this repository.
 
-workspace.code-workspace: "workspace" file for the Particle Workbench.  This is needed only if
+#### workspace.code-workspace: 
+"workspace" file for the Particle Workbench.  This is needed only if
 viewing/editing "AnimatronicMouthTest.ino" using the Particle Workbench.
