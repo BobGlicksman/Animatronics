@@ -34,6 +34,7 @@ project to to determine how to properly scale (averaged) sample values to servo 
 6. the overall project concept is:
 
 MP3 board --> analog processing circuit --> Photon ADC --> Photon firmware processing --> Servo control
+
        |
         ---> amplified speakers
 
