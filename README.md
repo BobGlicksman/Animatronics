@@ -32,6 +32,7 @@ how many samples should be averaged to drive the mouth servo in a realistic mann
 project to to determine how to properly scale (averaged) sample values to servo position movements.
 
 6. the overall project concept is:
+
 MP3 board --> analog processing circuit --> Photon ADC --> Photon firmware processing --> Servo control
        |
         ---> amplified speakers
