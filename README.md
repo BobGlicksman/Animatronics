@@ -59,7 +59,7 @@ produces the envelope information.
 ### Documents.
 #### Analog Processor Analysis.pptx:  
 MS Powerpoint file that shows the analog processing circuit, the 
-concept (block diagram) for the circuit, and Spice simulation and analysis.  Produced using LTSpice.
+concept (block diagram) for the circuit, and Spice simulation and analysis.  Produced using LTspice.
 
 ### Hardware.
 #### Analog.asc: 
