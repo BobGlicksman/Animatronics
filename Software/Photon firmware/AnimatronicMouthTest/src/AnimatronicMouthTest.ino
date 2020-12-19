@@ -30,7 +30,7 @@
  * the Photon is reset.
  * 
  * (c) 2020, 2021 Team Practical Projects, Bob Glicksman, Jim Schrempp
- * version: 1.0; 12-18-20
+ * version: 1.1; 12-18-20
  * 
  * *********************************************************************************/
 
