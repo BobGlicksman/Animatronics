@@ -59,7 +59,7 @@ void loop()
   if (millis() - timer > 10000) {
     timer = millis();
     myDFPlayer.next();  //Play next mp3 every 3 second.
-    Serial.println("\nPlaying next clip");
+    Serial.println("\nPlaying the next clip");
   }
   
   if (myDFPlayer.available()) {
