@@ -1,4 +1,4 @@
-# AnimatronicsMouth
+# Animatronics
 
 ## Overview.
 This repository contains experimental hardware, software and documentation for figuring out
