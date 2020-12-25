@@ -26,7 +26,7 @@ upon the examples in the DFRobotDFPlayerMini library.
  
 Author: Bob Glicksman 
 Date: 12/25/20
-Version 1.0
+Version 1.0.1
 *****************************************************/
 
 #include <DFRobotDFPlayerMini.h>  // MP3 player library
@@ -56,7 +56,7 @@ void setup()
 
 void loop() {
   static int clip = 4;  // start playing this clip
-  static boolean firstTrack = true;  // flag to indicate skip alternate tracks of clip
+  static boolean firstTrack = false;  // flag to indicate skip alternate tracks of clip
   static boolean firstTime = true;  // flag to denote first time through loop()
 
   if(firstTime == true) {
