@@ -1,6 +1,12 @@
 # DFRPlayerTest
 
-A Particle project named DFRPlayerTest
+A Particle project named DFRPlayerTest.  This program is simply the "basic" example program that has Arduino headers removed
+and the Particle version of the DFRobot mini-MP3 Player library installed.  Software serial has been replaced by Serial1: the second
+hardware UART that is connected to Photon Tx and Rx pins.  I also adjusted the time between clips.
+
+None of the example programs that come with the library test to see if a clip is complete.  Other programs in this repo show how
+testing that a clip is completed may be determined -- using serial I/O status from the Player as well as using the hardware BUSY
+line of the Player.
 
 ## Welcome to your project!
 
