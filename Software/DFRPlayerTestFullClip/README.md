@@ -1,6 +1,14 @@
 # DFRPlayerTestFullClip
 
-A Particle project named DFRPlayerTestFullClip
+A Particle project named DFRPlayerTestFullClip.  This program loops through the clips on a DFRobot mini MP3 Player, quering the Player
+to see if it is available and if the previous clip has finished.  The program works, but is complex due to many artifacts of the Player's
+serial I/O.  One artifact is that the Player appears to play some null track of a clip after playing the actual clip, so the Player reports
+a second ready right after the first.  This causes clips to be skipped.  This program uses an extra flag to make sure that skipped clips
+don't happen.  The program also uses a second flag to determine if this is the first time through loop(), as the Player status won't show
+that the previous clip is complete if there was no previous clip.
+
+Another problem is that querying Player status via serial I/O may cause a clip in process to play distorted.  At least, this has been reported
+on the Internet.  Other than this possible issue, the software works.
 
 ## Welcome to your project!
 
