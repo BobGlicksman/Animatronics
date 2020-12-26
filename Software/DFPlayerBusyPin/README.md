@@ -1,6 +1,10 @@
 # DFPlayerBusyPin
 
-A Particle project named DFPlayerBusyPin
+A Particle project named DFPlayerBusyPin.  This program loops through the clips on a DFRobot mini MP3 Player using the Player's BUSY
+pin (connected to Photon pin D0) to determine when the preious clip has completed.  I found that it is necessary to wait about 1 second 
+after commanding a new clip to be played before testing the BUSY line again (else, clips will be skipped).  The 1 second delay is 
+implemented in a non-blocking manner using millis().  This approach seems to be best overall even though it takes up an extra
+Photon I/O pin.
 
 ## Welcome to your project!
 
