@@ -45,8 +45,8 @@ Sensor (TBD) --> Photon --> firmware --> Photon Tx/Rx ---> MP3 board track selec
 ### Data.
 #### AnimatronicMouth.mp4: 
 this is a video of the mouth movement (roughly) in sync with
-a sound file.  The video and sound start at about 10 seconds into the video and end
-about 4 seconds later.
+a sound file.  The clip is about 4 seconds long.  This was done
+using the spice simulation of the old V1 circuit.
 
 #### Welcome_Waveform_High_Data.xlsx:  
 This is a spreadsheet containing 201 samples of the
@@ -57,7 +57,7 @@ the voice data file that is input to the analog processing circuit that
 produces the envelope information.
 
 ### Documents.
-#### Analog Processor Analysis.pptx:  
+#### Analog Processor V2 Analysis.pptx:  
 MS Powerpoint file that shows the analog processing circuit, the 
 concept (block diagram) for the circuit, and Spice simulation and analysis.  Produced using LTspice.
 

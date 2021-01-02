@@ -1,16 +1,18 @@
-# DFRPlayerTest
+# DFRPlayerTestFullClip
 
-A Particle project named DFRPlayerTest.  This program is simply the "basic" example program that has Arduino headers removed
-and the Particle version of the DFRobot mini-MP3 Player library installed.  Software serial has been replaced by Serial1: the second
-hardware UART that is connected to Photon Tx and Rx pins.  I also adjusted the time between clips.
+A Particle project named DFRPlayerTestFullClip.  This program loops through the clips on a DFRobot mini MP3 Player, quering the Player
+to see if it is available and if the previous clip has finished.  The program works, but is complex due to many artifacts of the Player's
+serial I/O.  One artifact is that the Player appears to play some null track of a clip after playing the actual clip, so the Player reports
+a second ready right after the first.  This causes clips to be skipped.  This program uses an extra flag to make sure that skipped clips
+don't happen.  The program also uses a second flag to determine if this is the first time through loop(), as the Player status won't show
+that the previous clip is complete if there was no previous clip.
 
-None of the example programs that come with the library test to see if a clip is complete.  Other programs in this repo show how
-testing that a clip is completed may be determined -- using serial I/O status from the Player as well as using the hardware BUSY
-line of the Player.
+Another problem is that querying Player status via serial I/O may cause a clip in process to play distorted.  At least, this has been reported
+on the Internet.  Other than this possible issue, the software works.
 
 ## Welcome to your project!
 
-Every new Particle project is composed of 3 important elements that you'll see have been created in your project directory for DFRPlayerTest.
+Every new Particle project is composed of 3 important elements that you'll see have been created in your project directory for DFRPlayerTestFullClip.
 
 #### ```/src``` folder:  
 This is the source folder that contains the firmware files for your project. It should *not* be renamed. 
