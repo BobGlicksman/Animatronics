@@ -51,8 +51,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define SERVO_MAX_POS 650 // this is the 'maximum' pulse length count (out of 4096)
 #define SERVO_MID_POS (SERVO_MAX_POS - SERVO_MIN_POS)/2 + SERVO_MIN_POS
 
-// Servo Positions for Eyelids Closed
-// Adjust these defines so the eyelids are correctly closed.
+// Servo Positions
 // THE CALIBRATION TEST WILL PRINT A SET OF DEFINES THAT YOU CAN COPY
 // AND PASTE OVER THE ONES BELOW. 
 // When you are satisfied with the servo operation, copy and paste these
