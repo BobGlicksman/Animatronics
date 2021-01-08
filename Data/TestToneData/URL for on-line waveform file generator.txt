@@ -1,0 +1,4 @@
+URL for waveform generator on-line:
+
+https://www.wavtones.com/functiongenerator.php
+
