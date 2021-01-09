@@ -1,21 +1,34 @@
 /***************************************************
-DFPlayerBusyPin.ino:  Demo program that loops through
-all clips on the mini MP3 player SD card.  This demo program
-tests the BUSY pin on the MP3 player in order to determine
-that a clip is finished playing before advancing to the next clip.
+DFPlayerControl.ino:  Program that plays a clip from
+the DFRobot miniMP3 player continuously (over and over).
+The clip is selected via Particle.function() so that it
+can be selected from the Particle Console.  This program
+is intended for testing the analog processing circuitry 
+that has been designed for the Animatronics project.
+
+This program tests the BUSY pin on the MP3 player in 
+order to determine that a clip is finished playing before 
+repeating it.  On each repeat, a global variable determines
+the clip that is to be played.  To change the clip, use
+the cloud function.
 
 Experimentation has revealed the following:
 It is necessary to wait about 1 second after starting to play a clip
 before testing the BUSY line to see that the MP3 player is actually
 busy.  A non-blocking 1 second timer is used in this program.
 
-This software is based upon "DFRPlayerTest.ino" which, in turn, is based 
-upon the examples in the DFRobotDFPlayerMini library.
+This software is based upon "DFPlayerBusyPin.ino" which was used to
+determine how to use the miniMP3 Player's BUSY pin.  The BUSY
+pin is connected to pin D0 on the Photon.  Photon Tx is connected
+to miniMP3 Rx and Photon Rx is connected to miniMP3 Tx.  The Photon
+Serial1 port is thereby used to communicate with the miniMP3 player
  
 Author: Bob Glicksman 
-Date: 12/26/20
+Date: 1/09/21
 Version 1.0
 *****************************************************/
+
+/*** LEFT OFF HERE ***/
 
 #include <DFRobotDFPlayerMini.h>  // MP3 player library
 DFRobotDFPlayerMini myDFPlayer;
