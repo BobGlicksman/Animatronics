@@ -34,7 +34,7 @@ DFRobotDFPlayerMini myDFPlayer;
 const int BUSY_PIN = D0;
 const int LED_PIN = D7;
 const unsigned long BUSY_TIMER = 1000;
-const int LAST_CLIP_NUM = 10;
+const int LAST_CLIP_NUM = 13;
 
 int clip = 0; // the clip to play
 int volume = 30;   // the mini MP3 player volume
