@@ -80,6 +80,8 @@ class animationList {
         int addScene(eScene scene, int speed, int delayAfterMoveMS);
         void process();
         void startRunning();
+        int isRunning();
+        void stopRunning();
 
         
     private: 
@@ -87,7 +89,7 @@ class animationList {
         int lastSceneIndex = -1;
         int startTimeMS = 0;
         int nextSceneChangeMS = 0;
-        bool isRunning = false;
+        bool isRunning_ = false;
         sceneInfo sceneList[MAX_SCENE]; 
 
         int setScene(eScene newScene, int speed, TPP_Head *theHead);

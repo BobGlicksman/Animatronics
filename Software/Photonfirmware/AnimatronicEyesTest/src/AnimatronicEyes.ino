@@ -36,10 +36,10 @@ SYSTEM_MODE(MANUAL);
 
 
 SerialLogHandler logHandler1(LOG_LEVEL_WARN, {  // Logging level for non-application messages
-    { "app.main", LOG_LEVEL_ALL }               // Logging for main loop
-    ,{ "app.head", LOG_LEVEL_ALL }               // Logging for Animate Head methods
-    ,{ "app.anilist", LOG_LEVEL_ALL }               // Logging for Animation List methods
-    ,{ "app.aniservo", LOG_LEVEL_ALL }          // Logging for Animate Servo details
+    { "app.main", LOG_LEVEL_INFO }               // Logging for main loop
+    ,{ "app.head", LOG_LEVEL_INFO }               // Logging for Animate Head methods
+    ,{ "app.anilist", LOG_LEVEL_INFO }               // Logging for Animation List methods
+    ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
 });
 
 Logger mainLog("app.main");
@@ -144,35 +144,37 @@ void setup() {
 
 
     // Establish Animation List
+
+    animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, -1);
+    animation1.addScene(sceneEyesClosed, MOVE_SPEED_FAST, 1000);
     
-    animation1.addScene(sceneEyesAheadOpen, 20, 2000);
+    animation1.addScene(sceneEyesAheadOpen, MOVE_SPEED_SLOW, 500);
 
-    animation1.addScene(sceneEyesClosed, 20, 1000);
-    //animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, 2000);
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, 500);
+    animation1.addScene(sceneEyesLeft, MOVE_SPEED_FAST, 500);
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, 2000);
 
-    animation1.addScene(sceneEyesOpen, 20, 1000);
-    //animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, 2000);
-/*
-    animation1.addScene(sceneEyesRight, MOVE_SPEED_SLOW, 500);
-    animation1.addScene(sceneEyesLeft, MOVE_SPEED_SLOW, 2000);
+    animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, -1);
+    animation1.addScene(sceneEyesOpenWide,MOVE_SPEED_FAST,-1);
+    animation1.addScene(sceneEyesUp, MOVE_SPEED_FAST, 500);
 
-    animation1.addScene(sceneEyesAhead, MOVE_SPEED_SLOW, 1000);
-    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 1000);
-    animation1.addScene(sceneEyesRight, MOVE_SPEED_SLOW, 1000);
-    animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 1000);
+    //animation1.addScene(sceneBlink, MOVE_SPEED_SLOW, 500);
+    //animation1.addScene(sceneBlink, MOVE_SPEED_SLOW, 500);
+
+    animation1.addScene(sceneEyesClosed, MOVE_SPEED_SLOW, -1);
     animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, 1000);
-    animation1.addScene(sceneEyesClosed, MOVE_SPEED_SLOW, 1000);
 
-    animation1.addScene(sceneEyesOpen, MOVE_SPEED_SLOW, 2000);
-    animation1.addScene(sceneEyesOpenWide, MOVE_SPEED_SLOW, 2000);
-
-    animation1.addScene(sceneEyesOpen, MOVE_SPEED_FAST, 2000);
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, -1);
     animation1.addScene(sceneEyesOpenWide, MOVE_SPEED_FAST, 2000);
 
-    animation1.addScene(sceneWinkLeft, MOVE_SPEED_SLOW, 2000);
-    animation1.addScene(sceneWinkRight, MOVE_SPEED_SLOW, 2000);
-    animation1.addScene(sceneBlink, MOVE_SPEED_SLOW, 1000);
-*/
+    animation1.addScene(sceneEyesOpen, MOVE_SPEED_SLOW, -1);
+    animation1.addScene(sceneEyesAhead, MOVE_SPEED_SLOW, 1000);
+
+    animation1.addScene(sceneEyesClosed, MOVE_SPEED_FAST, 1000);
+    
+
+    //animation1.addScene(sceneWinkLeft, MOVE_SPEED_SLOW, 2000);
+
 
     // Start the animation timer
     //animationTimer.start(); 

@@ -94,14 +94,34 @@ int animationList::addScene(eScene sceneIn, int speedIn, int delayAfterMoveMSIn)
 
 }
 
+/* ----- startRunning ----
+ * starts an animation run, beginning at the first scene
+ */
 void animationList::startRunning(){
     
-    isRunning = true;
+    isRunning_ = true;
     startTimeMS = millis();
     nextSceneChangeMS = millis();
     currentSceneIndex = -1;
     logAnilist("starting animation run");
 
+}
+
+/* ----- isRunning -----
+ * returns true if an animation run is in progress
+ */
+int animationList::isRunning(){
+    return isRunning_;
+}
+
+/* ----- stopRunning -----
+ *  stops the current animation run but does not 
+ *  reset the scene pointer. If you startRunning
+ *  after calling this, the animation list will 
+ *  continue
+ */
+void animationList::stopRunning(){
+    isRunning_ = false;
 }
 
 /* --------- process()
@@ -117,7 +137,7 @@ void animationList::process() {
     int timeToFinishScene = 0;
 
     // if not running, then exit
-    if (!isRunning) {
+    if (!isRunning_) {
         return;
     }
 
@@ -130,7 +150,7 @@ void animationList::process() {
             logAnilist.trace("moving to scene list # %d ", currentSceneIndex);
         } else {
             logAnilist.trace("Last Scene has played");
-            isRunning = false;
+            isRunning_ = false;
         }
 
     }
