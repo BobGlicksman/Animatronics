@@ -25,21 +25,29 @@
 
 const String version = "1.0";
  
+SYSTEM_MODE(MANUAL);
+
 #include <Wire.h>
 #include <TPPAnimateHead.h>
+#include <TPPAnimationList.h>
 
 #define CALLIBRATION_TEST 
 #define DEBUGON
 
+
 SerialLogHandler logHandler1(LOG_LEVEL_WARN, {  // Logging level for non-application messages
-    { "app.head", LOG_LEVEL_ALL }               // Logging for Animate Head methods
-   // ,{ "app.AnimateServo", LOG_LEVEL_ALL }       // Logging for Animate Servo details
+    { "app.main", LOG_LEVEL_ALL }               // Logging for main loop
+    ,{ "app.head", LOG_LEVEL_ALL }               // Logging for Animate Head methods
+    ,{ "app.anilist", LOG_LEVEL_ALL }               // Logging for Animation List methods
+    ,{ "app.aniservo", LOG_LEVEL_ALL }          // Logging for Animate Servo details
 });
 
-TPP_Head head;  // This is the master class that holds all the objects to be controlled
+Logger mainLog("app.main");
+  
+// This is the master class that holds all the objects to be controlled
+animationList animation1;  // When doing a programmed animation, this is the list of
+                           // scenes and when they are to be played
 
-#define SERVOMIN  140 // this is the 'minimum' pulse length count (out of 4096)
-#define SERVOMAX  520 // this is the 'maximum' pulse length count (out of 4096)
 
 
 
@@ -78,6 +86,10 @@ TPP_Head head;  // This is the master class that holds all the objects to be con
 // -------------------------------------------------------------------
 
 
+
+
+
+
 //------- midValue --------
 // Pass in two ints and this returns the value in the middle of them.
 int midValue(int value1, int value2) {
@@ -100,116 +112,91 @@ int midValue(int value1, int value2) {
 // which then gets passed down all the way to the AnimateServo library.
 // This timer allows the servos to continue to move even when the main
 // code is in a delay() function.
-Timer animationTimer(3, &TPP_Head::process, head);  
+//Timer animationTimer(500, animationTimerCallback);  
+
+// when called from a timer all kinds of things crash
+void animationTimerCallback() {
+
+    // now have animation pass this on to all the servos it manages
+    static bool inCall = false;
+    if (!inCall){
+        inCall = true;
+        animation1.process();
+        inCall = false;
+    }
+}
 
 //------ setup -----------
 void setup() {
 
-    Serial.begin(9600);
-    delay(100);
-    Serial.println("===========================================");
-    Serial.println("===========================================");
-    Serial.println("8 channel Servo test!");
+    delay(1000);
+    mainLog.info("===========================================");
+    mainLog.info("===========================================");
+    mainLog.info("Animate Eye Mechanism");
     
-    animationTimer.start(); // Start the animation timer
-
-
-    head.eyeballs.init(X_SERVO,X_POS_MID,X_POS_LEFT_OFFSET,X_POS_RIGHT_OFFSET,
+    animation1.head.eyeballs.init(X_SERVO,X_POS_MID,X_POS_LEFT_OFFSET,X_POS_RIGHT_OFFSET,
             Y_SERVO, Y_POS_MID, Y_POS_UP_OFFSET, Y_POS_DOWN_OFFSET);
 
-    head.eyelidLeftUpper.init(L_UPPERLID_SERVO, LEFT_UPPER_OPEN, LEFT_UPPER_CLOSED);
-    head.eyelidLeftLower.init(L_LOWERLID_SERVO, LEFT_LOWER_OPEN, LEFT_LOWER_CLOSED);
-    head.eyelidRightUpper.init(R_UPPERLID_SERVO, RIGHT_UPPER_OFFSET - LEFT_UPPER_OPEN, RIGHT_UPPER_OFFSET - LEFT_UPPER_CLOSED);
-    head.eyelidRightLower.init(R_LOWERLID_SERVO, RIGHT_LOWER_OFFSET - LEFT_LOWER_OPEN, RIGHT_LOWER_OFFSET - LEFT_LOWER_CLOSED);
+    animation1.head.eyelidLeftUpper.init(L_UPPERLID_SERVO, LEFT_UPPER_OPEN, LEFT_UPPER_CLOSED);
+    animation1.head.eyelidLeftLower.init(L_LOWERLID_SERVO, LEFT_LOWER_OPEN, LEFT_LOWER_CLOSED);
+    animation1.head.eyelidRightUpper.init(R_UPPERLID_SERVO, RIGHT_UPPER_OFFSET - LEFT_UPPER_OPEN, RIGHT_UPPER_OFFSET - LEFT_UPPER_CLOSED);
+    animation1.head.eyelidRightLower.init(R_LOWERLID_SERVO, RIGHT_LOWER_OFFSET - LEFT_LOWER_OPEN, RIGHT_LOWER_OFFSET - LEFT_LOWER_CLOSED);
+
+
+    // Establish Animation List
+    
+    animation1.addScene(sceneEyesAheadOpen, 20, 2000);
+
+    animation1.addScene(sceneEyesClosed, 20, 1000);
+    //animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, 2000);
+
+    animation1.addScene(sceneEyesOpen, 20, 1000);
+    //animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, 2000);
+/*
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_SLOW, 500);
+    animation1.addScene(sceneEyesLeft, MOVE_SPEED_SLOW, 2000);
+
+    animation1.addScene(sceneEyesAhead, MOVE_SPEED_SLOW, 1000);
+    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 1000);
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_SLOW, 1000);
+    animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 1000);
+    animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, 1000);
+    animation1.addScene(sceneEyesClosed, MOVE_SPEED_SLOW, 1000);
+
+    animation1.addScene(sceneEyesOpen, MOVE_SPEED_SLOW, 2000);
+    animation1.addScene(sceneEyesOpenWide, MOVE_SPEED_SLOW, 2000);
+
+    animation1.addScene(sceneEyesOpen, MOVE_SPEED_FAST, 2000);
+    animation1.addScene(sceneEyesOpenWide, MOVE_SPEED_FAST, 2000);
+
+    animation1.addScene(sceneWinkLeft, MOVE_SPEED_SLOW, 2000);
+    animation1.addScene(sceneWinkRight, MOVE_SPEED_SLOW, 2000);
+    animation1.addScene(sceneBlink, MOVE_SPEED_SLOW, 1000);
+*/
+
+    // Start the animation timer
+    //animationTimer.start(); 
+
+    animation1.startRunning();
     
 }
 
 //------- MAIN LOOP --------------
 void loop() {
 
-    int timeForPositionChange = 0;
-
     static bool firstLoop = true;
-    static int startTime = 0;
-    static int nextSceneTime = 0;
-    static int sceneNumber = -1;
-    bool sceneChange = false;
-    const int SCENE_MAX = 10;
-    static int sceneList[SCENE_MAX] = {1,2,3,4,5,1,6,7,6,8};
-    int sceneToSet = 0;
 
     if (firstLoop){
 
         firstLoop = false;
-        Serial.println("start up");
+        mainLog.info("start up");
 
     }
 
-    int runTime = millis() - startTime;
-
-    // Change to the next scene
-    if (runTime > nextSceneTime) {
-        sceneNumber++;
-        if (sceneNumber < SCENE_MAX) {
-            sceneChange = true;
-            sceneToSet = sceneList[sceneNumber];
-        }
-    }
-
-
-    if (sceneChange) {
-        sceneChange = false;
-        int time1;
-        int time2;
-        int time3;
-        switch (sceneToSet) {
-            case 1: 
-                Serial.println("\nScene: eyes center, open a   ===========================================");
-                head.eyesOpen(50, MOVE_SPEED_FAST);
-                timeForPositionChange =   head.eyeballs.lookCenter(MOVE_SPEED_SLOW) ;
-                nextSceneTime = runTime + 2000;
-                break;
-            case 2:
-                Serial.println("\nScene: close eyes b   ==========================================="); 
-                time1 = head.eyesOpen(0,MOVE_SPEED_SLOW);    
-                time3 = head.eyeballs.lookCenter(MOVE_SPEED_SLOW); 
-                timeForPositionChange = max(time1,time3);
-                nextSceneTime = runTime + timeForPositionChange;
-                break;
-            case 3:
-                Serial.println("\nScene: eyes right, eyes open c   ===========================================");
-                time1 = head.eyesOpen(50, MOVE_SPEED_SLOW);
-                time3 = head.eyeballs.positionX(100,MOVE_SPEED_SLOW); 
-                timeForPositionChange = max(time1,time3);
-                nextSceneTime = runTime + timeForPositionChange;
-                break;
-            case 4:
-                Serial.println("\nScene: eyes up d   ===========================================");
-                timeForPositionChange = head.eyeballs.positionY(100,MOVE_SPEED_SLOW);
-                nextSceneTime = runTime + timeForPositionChange;
-                break;
-            case 5:
-                Serial.println("\nScene: eyes down e   ===========================================");
-                timeForPositionChange = head.eyeballs.positionY(0,MOVE_SPEED_SLOW);
-                nextSceneTime = runTime + timeForPositionChange;
-                break;
-            case 6:
-                Serial.println("\nScene: delay a second f   ===========================================");
-                nextSceneTime = runTime + 1000;
-                break;
-            case 7:
-                Serial.println("\nScene: blink   ===========================================");
-                timeForPositionChange = head.blink();
-                nextSceneTime = runTime + timeForPositionChange;
-                break;
-            case 8:
-                Serial.println("\nScene: wink right   ===========================================");
-                timeForPositionChange = head.wink(false);
-                nextSceneTime = runTime + timeForPositionChange;
-                break;
-            default:
-                break;
-        }
-    }
+    animationTimerCallback();
 
 }
+
+
+
+
