@@ -56,8 +56,8 @@ const int ANALOG_ENV_INPUT = A2;
 
 // defined constants
 const int SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
-const int MOUTH_CLOSED = 90;  // servo position for the mouth closed
-const int MOUTH_OPENED = 180;  // servo position for the wide open mouth
+const int MOUTH_CLOSED = 180;  // servo position for the mouth closed
+const int MOUTH_OPENED = 90;  // servo position for the wide open mouth
 
 // define global variables for the mini MP3 Player
 int maxValue = 4095; // the highest expected analog input value - for servo mapping
@@ -66,7 +66,7 @@ int numSamples = 5; // the number of analog input samples to average for a servo
 
 // cloud variables to report statistics
 int maxFound = 0; // the maximum analog value found in the data set
-int minFound = 0; // the minimum analog value found in the data set
+int minFound = 4095; // the minimum analog value found in the data set
 
 
 
@@ -78,6 +78,7 @@ void setup() {
   // register Particle Cloud functions and variables
   Particle.function("clip number", clipNum);
   Particle.function("volume", clipVolume);
+  Particle.function("number of samples", samples);
   Particle.function("analog input max", analogMax);
   Particle.function("analog input min", analogMin);
   Particle.variable("max envelope value", maxFound);
@@ -92,21 +93,55 @@ void setup() {
 
   // blink and turn on the D7 LED on to indicate that the device is ready
   digitalWrite(LED_PIN, HIGH);
+  mouthServo.write(MOUTH_CLOSED);
   delay(500);
   digitalWrite(LED_PIN, LOW);
+  mouthServo.write(MOUTH_OPENED);
   delay(500);
   digitalWrite(LED_PIN, HIGH);
+  mouthServo.write(MOUTH_CLOSED);
 
 }
 
 
 void loop() {
-  // read a sample every 10 ms (non-blocking)
-  // average the samples
-  // record min and max values
-  // map averaged values and control the servo
+  static unsigned long lastSampleTime = millis();
+  static unsigned int averagedData = 0;
+  static unsigned int numberAveragedPoints = 0;
+  int servoCommand;
 
-}
+  // read a sample every 10 ms (non-blocking)
+  if( (millis() - lastSampleTime) >= SAMPLE_INTERVAL) {
+    // average the samples
+    averagedData += analogRead(ANALOG_ENV_INPUT); // read in analog data and add
+    numberAveragedPoints++; // keep track of how many points are added
+    if(numberAveragedPoints >= numSamples) {  // number samples to average reached
+      averagedData = averagedData / numSamples; // average the sum
+      // command the servo
+      servoCommand = map(averagedData, minValue, maxValue, MOUTH_CLOSED, MOUTH_OPENED);
+      // send data to servo only if clip is playing, else close the mouth
+      if(digitalRead(BUSY_PIN) == LOW) {
+        mouthServo.write(servoCommand);
+      } else {
+        mouthServo.write(MOUTH_CLOSED);
+      }
+
+
+      // set max and min values found
+      if(averagedData > maxFound) {
+        maxFound = averagedData;
+      } else if (averagedData < minFound) {
+        minFound = averagedData;
+      }
+
+      averagedData = 0; // reset for the next average
+      numberAveragedPoints = 0; // reset the average count
+    }
+
+    lastSampleTime = millis();  // reset the sample timer
+  }
+
+} // end of loop()
 
 // cloud function to set the clip number and play the clip
 int clipNum(String playClip) {
@@ -115,8 +150,12 @@ int clipNum(String playClip) {
   if (clip < 0) {
     clip = 0;
   }
+  // reset the max and min values found for a new clip
+  maxFound = 0;
+  minFound = 4095;
+  // play the clip
   miniMP3Player.play(clip);
-  return 0;
+  return clip;
 } // end of clipNum()
 
 // cloud function to set the playback volume
@@ -129,8 +168,18 @@ int clipVolume(String volume) {
     vol = 0;
   }
   miniMP3Player.volume(vol);
-  return 0;
+  return vol;
 } // end of clipVolume
+
+// cloud function to set the number of samples to average
+int samples(String numberSamples) {
+  numSamples = numberSamples.toInt();
+  // make sure that the number is positive and non-zero
+  if(numSamples < 1) {
+    numSamples = 1;
+  }
+  return numSamples;
+}
 
 // cloud function to set the global maxValue
 int analogMax(String theMax) {
