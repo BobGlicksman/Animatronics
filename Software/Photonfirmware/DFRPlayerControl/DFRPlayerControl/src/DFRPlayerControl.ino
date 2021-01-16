@@ -24,27 +24,27 @@ to miniMP3 Rx and Photon Rx is connected to miniMP3 Tx.  The Photon
 Serial1 port is thereby used to communicate with the miniMP3 player
  
 Author: Bob Glicksman 
-Date: 1/09/21
+Date: 1/10/21
 Version 1.0
 *****************************************************/
-
-/*** LEFT OFF HERE ***/
 
 #include <DFRobotDFPlayerMini.h>  // MP3 player library
 DFRobotDFPlayerMini myDFPlayer;
 
 const int BUSY_PIN = D0;
+const int LED_PIN = D7;
 const unsigned long BUSY_TIMER = 1000;
-const int LAST_CLIP_NUM = 10;
+const int LAST_CLIP_NUM = 13;
+
+int clip = 0; // the clip to play
+int volume = 30;   // the mini MP3 player volume
 
 void setup()
 {
   Serial1.begin(9600);  // mini MP3 player conected using Serial1; Tx/Rx pins on Photon
+
+  // debug: enable usb serial port and print mini MP3 status
   Serial.begin(9600);   // use Putty for control and status via Serial (USB) port
-  pinMode(BUSY_PIN, INPUT);
-  
-  delay(5000);  // delay to get putty going
-  
   Serial.println();
   Serial.println(F("DFRobot DFPlayer Mini Demo"));
   Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
@@ -56,30 +56,55 @@ void setup()
     while(true);  // hang up here to clear out hardware issue
   }
   Serial.println(F("DFPlayer Mini online."));
-  myDFPlayer.volume(30);  //Set volume value. From 0 to 30
+
+  pinMode(BUSY_PIN, INPUT); // setup the busy status indicator
+  pinMode(LED_PIN, OUTPUT); // the D7 led
+  digitalWrite(LED_PIN, LOW);
+
+
+
+  // register the cloud function that selects the clip to play
+  Particle.function("clip number", clipNum);
+
+  // register the cloud function that selects the volume
+  Particle.function("volume", clipVolume);
+
+  delay(5000);  // delay to get putty going
 
 } // end of setup()
 
 void loop() {
-  static int clip = 1;  // start playing this clip
   static unsigned long busyDelay = millis();
+
+  digitalWrite(LED_PIN, HIGH); // indicate ready via D7 LED
 
   // non-blocking timer
   if( (millis() - busyDelay ) >= BUSY_TIMER) {
 
     // test the busy pin to see if the MP3 player is ready to play a new track
     if(digitalRead(BUSY_PIN) == HIGH) { // HIGH means ready, LOW means busy
-      Serial.print("\nPlaying clip: "); 
-      Serial.println(clip);
-      myDFPlayer.play(clip);  // play the next track
+      if( (clip > 0) && (clip <= LAST_CLIP_NUM)) {
+        Serial.print("\nPlaying clip: "); 
+        Serial.println(clip);
 
-      // advance to the next clip
-      clip++;
-      if(clip > LAST_CLIP_NUM) {
-        clip = 1;
+        myDFPlayer.volume(volume);  //Set volume value. From 0 to 30
+        myDFPlayer.play(clip);  // play the next track
+
       }
       busyDelay = millis(); // update the busy timer
     }
   }
 
 } // end of loop()
+
+// the cloud function to select the next clip.  0 = no clip
+int clipNum(String clipNumber) {
+  clip = clipNumber.toInt(); // set the global variable to the next clip number
+  return 0;
+} // end of clipNum()
+
+// the cloud function to select the clip volume (0 - 30)
+int clipVolume(String clipVol) {
+  volume = clipVol.toInt(); // set the global variable to the next clip number
+  return 0;
+} // end of clipVol()
