@@ -1,0 +1,6 @@
+*.pem
+*.bin
+*.der
+AnimatronicEyes.cpp
+.vscode/*
+target/*

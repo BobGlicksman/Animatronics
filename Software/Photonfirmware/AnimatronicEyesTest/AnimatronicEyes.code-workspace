@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+        "cortex-debug.openocdPath": "${command:particle.getDebuggerOpenocdPath}",
+        "files.associations": {
+            "cmath": "cpp",
+            "cstdarg": "cpp",
+            "cstdio": "cpp",
+            "cstdlib": "cpp",
+            "exception": "cpp",
+            "limits": "cpp",
+            "*.tcc": "cpp",
+            "cstdint": "cpp",
+            "type_traits": "cpp",
+            "typeinfo": "cpp"
+        }
+	}
+}

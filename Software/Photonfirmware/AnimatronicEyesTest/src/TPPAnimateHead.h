@@ -1,5 +1,5 @@
 /*
- * TPPAnimateHead.cpp
+ * TPPAnimateHead.h
  * 
  * Team Practical Project eye mechanism control
  * 
@@ -10,14 +10,25 @@
  * Instantiate this class, and it will create an instance of the TPPAnimateServo library.
  * 
  * Classes: 
+ *      Head:      holds eyeballs and eyelids and provides convenience functions to control them
  *      Eyeballs:  controls the x and y axis of the eyeballs
  *      Eyelid:    controls one eyelid
- *      Head:      holds eyeballs and eyelids and provides convenience functions to control them
+ *
  * 
  * Key methods
- *      begin:  pass in the servo number(s) on the AdaFruit servo driver board to control
- *      process: called over and over to cause the servo to move from its current
- *              position to the new target position
+ *      head
+ *          .process()  called over and over to cause the servos to move from current
+ *              position to the new target position. This function in turn calls process()
+ *              on each of the other control objects
+ *          .eyeOpen()  one of several other convenice functions
+ *      eyeball
+ *          .init()  sets all the parameters needed to control the eyeball mechanism
+ *          .positionX/Y() used to set the position of the eyeballs
+ *          .lookCenter()  one of several other convenience functions
+ *      eyelid
+ *          .init() sets parameters needed to control one eyelid
+ *          .position()  moves eyelid with a % open parameter
+ * 
  * 
  * For full documentation see https://github/TeamPracticalProjects/XXXX
  * 
@@ -30,7 +41,10 @@
 
 #include <TPPAnimateServo.h>
 
+
+
 class TPP_Eyeball {
+
     public:
         void init(int xservoNum, int xmidPos, int leftOffset, int rightOffset, 
              int yservoNum, int ymidPos, int upOffset, int downOffset);
@@ -38,6 +52,7 @@ class TPP_Eyeball {
         int positionX(int position, int speed);
         int positionY(int position, int speed); 
         int lookCenter(int speed);
+
     private:
         int xservoNum;
         int yservoNum;
@@ -53,10 +68,12 @@ class TPP_Eyeball {
 };
 
 class TPP_Eyelid {
+
     public:
         void init(int servoNum, int openPos, int closedPos);
         void process();
         int position(int position, int speed);
+
     private:
         int servoNum;
         int openPos;
@@ -65,7 +82,9 @@ class TPP_Eyelid {
 
 };
 
+// TPP_Head holds all the other objects that map to a servo(s)
 class TPP_Head {
+
     public:
         void process();
         int eyesOpen(int position, int speed);
@@ -77,6 +96,8 @@ class TPP_Head {
         TPP_Eyelid eyelidRightUpper;
         TPP_Eyelid eyelidRightLower;
         TPP_Eyeball eyeballs;
+        
+    private:
 
 };
 
