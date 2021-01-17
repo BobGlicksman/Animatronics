@@ -32,11 +32,16 @@
  *      processign circuitry.
  * 
  * Author: Bob Glicksman (Jim Schrempp, Team Practical Projects)
- * Version: 1.0
+ * Version: 1.1
  * Date:  1/16/21
  * (c) 2021, Bob Glicksman, Jim Schrempp, Team Practical Projects
  *  all rights reservd.
  * License: open source, non-commercial
+ * History:
+ * version 1.1: added constrain() to prevent the servo from pegging; Toggle
+ *  the D7 LED every time that the servo is written to so that the actual
+ *  servo update rate can be tested using a scope.
+ * version 1.0: initial release
  * 
  ***************************************************************************************/
 
@@ -55,7 +60,7 @@ const int LED_PIN = D7;
 const int ANALOG_ENV_INPUT = A2;
 
 // defined constants
-const int SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
+const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
 const int MOUTH_CLOSED = 180;  // servo position for the mouth closed
 const int MOUTH_OPENED = 90;  // servo position for the wide open mouth
 
@@ -108,6 +113,7 @@ void loop() {
   static unsigned long lastSampleTime = millis();
   static unsigned int averagedData = 0;
   static unsigned int numberAveragedPoints = 0;
+  static bool toggle = false;
   int servoCommand;
 
   // read a sample every 10 ms (non-blocking)
@@ -119,13 +125,14 @@ void loop() {
       averagedData = averagedData / numSamples; // average the sum
       // command the servo
       servoCommand = map(averagedData, minValue, maxValue, MOUTH_CLOSED, MOUTH_OPENED);
+      // constrain the servo so it doesn't peg at 0 or 180 degrees.
+      servoCommand = constrain(servoCommand, 5, 175);
       // send data to servo only if clip is playing, else close the mouth
       if(digitalRead(BUSY_PIN) == LOW) {
         mouthServo.write(servoCommand);
       } else {
         mouthServo.write(MOUTH_CLOSED);
       }
-
 
       // set max and min values found
       if(averagedData > maxFound) {
@@ -136,10 +143,23 @@ void loop() {
 
       averagedData = 0; // reset for the next average
       numberAveragedPoints = 0; // reset the average count
+
+      // toggle the D7 LED so that it will pulse at 1/2 averaged sample time
+      //    this will normally be too fast to see on the LED, but good pin to scope
+      if(toggle == false) {
+        digitalWrite(LED_PIN, LOW);
+        toggle = true;
+      } else {
+        digitalWrite(LED_PIN, HIGH);
+        toggle = false;
+      }
     }
 
     lastSampleTime = millis();  // reset the sample timer
   }
+
+
+  
 
 } // end of loop()
 
@@ -179,7 +199,7 @@ int samples(String numberSamples) {
     numSamples = 1;
   }
   return numSamples;
-}
+} // end of samples()
 
 // cloud function to set the global maxValue
 int analogMax(String theMax) {
