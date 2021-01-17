@@ -40,12 +40,9 @@
 
 Logger logHead("app.head");
 
-
-
 // ---------------------------------------------------------
 //-------------------   HEAD  ---------------------------
 //   Holds all other objects that are in the head
-
 
 /*----- process -----
  * called often to give the animation a chance to step forward
@@ -224,9 +221,10 @@ void TPP_Eyelid::process(){
 */
 int TPP_Eyelid::position(int position, int speed){
 
-    logHead.info("Eyelid to position %d%%", position);
-    position = map(position, 0, 100, closedPos, openPos);
-    return myServo.moveTo(position, speed);
+    logHead.info("Eyelid to position %d%%, speed %d", position, speed);
+    int newPosition = map(position, 0, 100, closedPos, openPos);
+    int durationMS = myServo.moveTo(newPosition, speed);
+    return durationMS;
 
 }
 

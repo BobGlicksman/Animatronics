@@ -13,8 +13,6 @@
  *    
  */ 
 
-
-
 // Original Source from:
 //  Nilheim Mechatronics Simplified Eye Mechanism Code
 //  Make sure you have the Adafruit servo driver library installed >>>>> https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library
@@ -34,12 +32,11 @@ SYSTEM_MODE(MANUAL);
 #define CALLIBRATION_TEST 
 #define DEBUGON
 
-
 SerialLogHandler logHandler1(LOG_LEVEL_WARN, {  // Logging level for non-application messages
     { "app.main", LOG_LEVEL_INFO }               // Logging for main loop
     ,{ "app.head", LOG_LEVEL_INFO }               // Logging for Animate Head methods
-    ,{ "app.anilist", LOG_LEVEL_INFO }               // Logging for Animation List methods
-    ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
+    ,{ "app.anilist", LOG_LEVEL_TRACE }               // Logging for Animation List methods
+    ,{ "app.aniservo", LOG_LEVEL_TRACE }          // Logging for Animate Servo details
 });
 
 Logger mainLog("app.main");
@@ -47,8 +44,6 @@ Logger mainLog("app.main");
 // This is the master class that holds all the objects to be controlled
 animationList animation1;  // When doing a programmed animation, this is the list of
                            // scenes and when they are to be played
-
-
 
 
 // Servo Numbers for the Servo Driver board
@@ -86,10 +81,6 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 // -------------------------------------------------------------------
 
 
-
-
-
-
 //------- midValue --------
 // Pass in two ints and this returns the value in the middle of them.
 int midValue(int value1, int value2) {
@@ -113,13 +104,14 @@ int midValue(int value1, int value2) {
 // This timer allows the servos to continue to move even when the main
 // code is in a delay() function.
 //Timer animationTimer(500, animationTimerCallback);  
+//Timer animationTimer(5, &animationList::process, animation1); 
 
-// when called from a timer all kinds of things crash
+// when called from a timer it crashes
 void animationTimerCallback() {
 
     // now have animation pass this on to all the servos it manages
     static bool inCall = false;
-    if (!inCall){
+    if (!inCall) {
         inCall = true;
         animation1.process();
         inCall = false;
@@ -145,38 +137,81 @@ void setup() {
 
     // Establish Animation List
 
-    animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, -1);
-    animation1.addScene(sceneEyesClosed, MOVE_SPEED_FAST, 1000);
+    animation1.addScene(sceneEyesAhead, MOVE_SPEED_SLOW, -1);
+    animation1.addScene(sceneEyesClosed, MOVE_SPEED_SLOW, 0);
     
-    animation1.addScene(sceneEyesAheadOpen, MOVE_SPEED_SLOW, 500);
+    animation1.addScene(sceneEyesAheadOpen, MOVE_SPEED_SLOW, 0);
 
-    animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, 500);
-    animation1.addScene(sceneEyesLeft, MOVE_SPEED_FAST, 500);
-    animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, 2000);
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesLeft, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesLeft, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_SLOW, 0);
+
+    animation1.addScene(sceneEyesLeft, MOVE_SPEED_FAST, 0);
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, 0);
+    animation1.addScene(sceneEyesLeft, MOVE_SPEED_FAST, 0);
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, 0);
+
+    animation1.addScene(sceneEyesAhead, MOVE_SPEED_SLOW, 0);
+
+    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 0);
+
+
+    animation1.addScene(sceneEyesClosed, 400, 0);
+    animation1.addScene(sceneEyesOpen, 400, 1000);
+    animation1.addScene(sceneEyesClosed, 400, 0);
+    animation1.addScene(sceneEyesOpen, 400, 1000);
+    animation1.addScene(sceneEyesClosed, 400, 0);
+    animation1.addScene(sceneEyesOpen, 400, 1000);
+    animation1.addScene(sceneEyesClosed, 400, 0);
+    animation1.addScene(sceneEyesOpen, 400, 1000);
+
+/*
 
     animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, -1);
-    animation1.addScene(sceneEyesOpenWide,MOVE_SPEED_FAST,-1);
-    animation1.addScene(sceneEyesUp, MOVE_SPEED_FAST, 500);
+    animation1.addScene(sceneEyesOpenWide,MOVE_SPEED_FAST,500);
 
     //animation1.addScene(sceneBlink, MOVE_SPEED_SLOW, 500);
     //animation1.addScene(sceneBlink, MOVE_SPEED_SLOW, 500);
 
-    animation1.addScene(sceneEyesClosed, MOVE_SPEED_SLOW, -1);
+    animation1.addScene(sceneEyesClosed, MOVE_SPEED_FAST, -1);
     animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, 1000);
 
     animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, -1);
     animation1.addScene(sceneEyesOpenWide, MOVE_SPEED_FAST, 2000);
 
-    animation1.addScene(sceneEyesOpen, MOVE_SPEED_SLOW, -1);
-    animation1.addScene(sceneEyesAhead, MOVE_SPEED_SLOW, 1000);
-
-    animation1.addScene(sceneEyesClosed, MOVE_SPEED_FAST, 1000);
-    
-
-    //animation1.addScene(sceneWinkLeft, MOVE_SPEED_SLOW, 2000);
+    animation1.addScene(sceneEyesOpen, 5, -1);
+    animation1.addScene(sceneEyesAhead, 5, 1000);
 
 
-    // Start the animation timer
+    animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, -1);
+    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, -1);
+    animation1.addScene(sceneEyesOpenWide, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesOpen, MOVE_SPEED_FAST, -1);
+    animation1.addScene(sceneEyesDown,5,-1);
+    animation1.addScene(sceneEyesLeft, 5, 0);
+
+
+ */
+    //end position
+    animation1.addScene(sceneEyesAhead, 3, -1);
+    animation1.addScene(sceneEyesClosed, 1, 100);
+
+   
+
+
+
+
+    // xxx using the timer causes a crash
+    // Start the animation timer 
     //animationTimer.start(); 
 
     animation1.startRunning();
