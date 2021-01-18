@@ -38,12 +38,14 @@
 class TPP_AnimateServo{
 
     public:
+        TPP_AnimateServo();
         void begin(int servoNum, int postion);
         void process(); // called every time in the loop to keep the eyes moving
         int moveTo (int newX, int speed);
 
     private:
-        Adafruit_PWMServoDriver pwm_ = Adafruit_PWMServoDriver();
+        static void initPWM();      // called once in the class inititator to init pwm library
+
         int servoNum_ = 0;          // Number of this servo on the driver board 
         float position_ = -1;       // the current position of the servo
         int destination_ = 0;       // the position we are heading towards

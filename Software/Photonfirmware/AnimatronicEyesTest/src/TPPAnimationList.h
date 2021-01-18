@@ -71,28 +71,28 @@ enum eScene {
 
 class animationList {
     public:
-        struct sceneInfo {
-            eScene scene;
-            int speed;
-            int delayAfterMoveMS;
-        };
-        TPP_Head head;
         int addScene(eScene scene, int speed, int delayAfterMoveMS);
         void process();
         void startRunning();
         int isRunning();
         void stopRunning();
+        void clearSceneList();
+        TPP_Head head;
 
-        
     private: 
-        int currentSceneIndex = 0;
-        int lastSceneIndex = -1;
-        int startTimeMS = 0;
-        int nextSceneChangeMS = 0;
+        struct sceneInfo {
+            eScene scene;
+            int speed;
+            int delayAfterMoveMS;
+        };
+        
+        int currentSceneIndex_ = 0;     // index into sceneList of the scene currently displayed
+        int lastSceneIndex_ = -1;       // index into sceneList of the last valid scene
+        int nextSceneChangeMS_ = 0;    // millis() when the scene should move to the next in the sceneList
         bool isRunning_ = false;
-        sceneInfo sceneList[MAX_SCENE]; 
+        sceneInfo sceneList_[MAX_SCENE]; // list of scenes to be played in order
 
-        int setScene(eScene newScene, int speed, TPP_Head *theHead);
+        int setScene(eScene newScene, int speed); //XXX, TPP_Head *theHead);
 };
 
 #endif

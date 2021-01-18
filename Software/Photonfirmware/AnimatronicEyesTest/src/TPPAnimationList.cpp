@@ -79,16 +79,16 @@ const char* eSceneNames[12] {
 int animationList::addScene(eScene sceneIn, int speedIn, int delayAfterMoveMSIn){
 
     // is there room for another scene?
-    if (lastSceneIndex == MAX_SCENE - 1) {
+    if (lastSceneIndex_ == MAX_SCENE - 1) {
         logAnilist.warn("Too many scenes.");
         return 1;
     }
 
     // add new scene to end of list
-    lastSceneIndex++;
-    sceneList[lastSceneIndex].scene = sceneIn;
-    sceneList[lastSceneIndex].speed = speedIn;
-    sceneList[lastSceneIndex].delayAfterMoveMS = delayAfterMoveMSIn;
+    lastSceneIndex_++;
+    sceneList_[lastSceneIndex_].scene = sceneIn;
+    sceneList_[lastSceneIndex_].speed = speedIn;
+    sceneList_[lastSceneIndex_].delayAfterMoveMS = delayAfterMoveMSIn;
 
     return 0;
 
@@ -100,9 +100,8 @@ int animationList::addScene(eScene sceneIn, int speedIn, int delayAfterMoveMSIn)
 void animationList::startRunning(){
     
     isRunning_ = true;
-    startTimeMS = millis();
-    nextSceneChangeMS = millis();
-    currentSceneIndex = -1;
+    nextSceneChangeMS_ = millis();
+    currentSceneIndex_ = -1;
     logAnilist("starting animation run");
 
 }
@@ -124,6 +123,16 @@ void animationList::stopRunning(){
     isRunning_ = false;
 }
 
+/* ----- clearSceneList -----
+ *  resets the scene list. If startRunning
+ *  is called immediately after this it will
+ *  essentially have no effect on the mechanisms.
+ */
+void animationList::clearSceneList(){
+    isRunning_ = false;
+    currentSceneIndex_ = -1;
+}
+
 /* --------- process()
  * Works through the animation list setting each scene when the
  * previous scene should be done. 
@@ -131,10 +140,8 @@ void animationList::stopRunning(){
 void animationList::process() {
 
     bool sceneChangeNow = false;
-    int runTime = millis() - startTimeMS;
-    //why do the following two generate warnings?
-    int sceneToSet = 0; 
-    int timeToFinishScene = 0;
+    int runTime = millis();
+    int timeToFinishScene_ = 0;    
 
     // if not running, then exit
     if (!isRunning_) {
@@ -142,12 +149,12 @@ void animationList::process() {
     }
 
     // Is it time to change to the next scene?
-    if (runTime > nextSceneChangeMS) {
+    if (runTime > nextSceneChangeMS_) {
 
-        currentSceneIndex++;
-        if (currentSceneIndex < lastSceneIndex) {
+        currentSceneIndex_++;
+        if (currentSceneIndex_ <= lastSceneIndex_) {
             sceneChangeNow = true;
-            logAnilist.trace("moving to scene list # %d ", currentSceneIndex);
+            logAnilist.trace("moving to scene list # %d ", currentSceneIndex_);
         } else {
             logAnilist.trace("Last Scene has played");
             isRunning_ = false;
@@ -160,22 +167,21 @@ void animationList::process() {
 
         sceneChangeNow = false;
 
-        logAnilist.trace("Changing scene now to %s", eSceneNames[sceneList[currentSceneIndex].scene]);
+        logAnilist.trace("Changing scene now to %s", eSceneNames[sceneList_[currentSceneIndex_].scene]);
 
-        sceneToSet = sceneList[currentSceneIndex].scene;
+        eScene thisScene = sceneList_[currentSceneIndex_].scene;
+        float thisSpeed = sceneList_[currentSceneIndex_].speed;
 
-        eScene thisScene = sceneList[currentSceneIndex].scene;
-        float thisSpeed = sceneList[currentSceneIndex].speed;
-
-        timeToFinishScene = setScene(thisScene, thisSpeed, &head);
+        timeToFinishScene_ = setScene(thisScene, thisSpeed); //XXX, &head);
 
         // Should we wait for the servos to finish moving?
-        if (sceneList[currentSceneIndex].delayAfterMoveMS > -1 ){
+        if (sceneList_[currentSceneIndex_].delayAfterMoveMS > -1 ){
 
-            nextSceneChangeMS = millis() + timeToFinishScene + sceneList[currentSceneIndex].delayAfterMoveMS;
+            nextSceneChangeMS_ = millis() + timeToFinishScene_ + sceneList_[currentSceneIndex_].delayAfterMoveMS;
 
         }  // else the scene will change on the very next call to this process() routine
         
+        logAnilist.trace("Next scene at: %d",nextSceneChangeMS_);
     }
 
     head.process();
@@ -185,80 +191,67 @@ void animationList::process() {
 // setScene
 // Positions the objects to their positions for the scene
 // Returns the estimated time to reach the scene
-int animationList::setScene(eScene newScene, int speed, TPP_Head *theHead){
-
+int animationList::setScene(eScene newScene, int speed){ //, TPP_Head *theHead){ XXX
 
     int timeForSceneChange = 0;
-    
 
-    logAnilist.trace("now setting scene %s with speed %d ", eSceneNames[newScene], speed);
+    logAnilist.info("now setting scene %s with speed %d ", eSceneNames[newScene], speed);
 
     // For each scene in the eNum scene, we set the servos to their positions
     switch (newScene) {
 
         case sceneEyesAheadOpen:
-            logAnilist.trace("Scene: eyes ahead and open   ===========================================");
-            timeForSceneChange = theHead->eyeballs.lookCenter(speed) ;
-            timeForSceneChange = theHead->eyesOpen(50, speed);
+            timeForSceneChange = head.eyeballs.lookCenter(speed) ;
+            timeForSceneChange = head.eyesOpen(50, speed);
             break;
 
         case sceneEyesAhead: 
-            logAnilist.trace("Scene: eyes ahead   ===========================================");
-            timeForSceneChange = theHead->eyeballs.lookCenter(speed) ;
+            timeForSceneChange = head.eyeballs.lookCenter(speed) ;
             break;
 
         case sceneEyesOpenWide:
-            logAnilist.trace("Scene: eyes open wide   ==========================================="); 
-            timeForSceneChange = theHead->eyesOpen(100,speed); 
+            timeForSceneChange = head.eyesOpen(100,speed); 
             break;
 
         case sceneEyesOpen:
-            logAnilist.trace("Scene: eyes open   ==========================================="); 
-            timeForSceneChange = theHead->eyesOpen(50,speed); 
+            timeForSceneChange = head.eyesOpen(50,speed); 
             break;
 
         case sceneEyesClosed:
-            logAnilist.trace("Scene: eyes closed   ==========================================="); 
-            timeForSceneChange = theHead->eyesOpen(0,speed);    
+            timeForSceneChange = head.eyesOpen(0,speed);    
             break;
 
         case sceneEyesRight:
-            logAnilist.trace("Scene: eyes right  ===========================================");
-            timeForSceneChange = theHead->eyeballs.positionX(100,speed); 
+            timeForSceneChange = head.eyeballs.positionX(100,speed); 
             break;
         
         case sceneEyesLeft:
-            logAnilist.trace("Scene: eyes left  ===========================================");
-            timeForSceneChange = theHead->eyeballs.positionX(0,speed); 
+            timeForSceneChange = head.eyeballs.positionX(0,speed); 
             break;
 
         case sceneEyesUp:
-            logAnilist.trace("Scene: eyes up    ===========================================");
-            timeForSceneChange = theHead->eyeballs.positionY(100,speed);
+            timeForSceneChange = head.eyeballs.positionY(100,speed);
             break;
 
         case sceneEyesDown:
-            logAnilist.trace("Scene: eyes down    ===========================================");
-            timeForSceneChange = theHead->eyeballs.positionY(0,speed);
+            timeForSceneChange = head.eyeballs.positionY(0,speed);
             break;
 
         case sceneBlink:
-            logAnilist.trace("Scene: blink   ===========================================");
-            timeForSceneChange = theHead->blink();
+            timeForSceneChange = head.blink();
             break;
 
         case sceneWinkLeft:
-            logAnilist.trace("Scene: wink left   ===========================================");
-            timeForSceneChange = theHead->wink(true);
+            timeForSceneChange = head.wink(true);
             break;
 
         case sceneWinkRight:
-            logAnilist.trace("Scene: wink right   ===========================================");
-            timeForSceneChange = theHead->wink(false);
+            timeForSceneChange = head.wink(false);
             break;
 
         default:
-            logAnilist.trace("Unknown Scene");
+            logAnilist.error("Unknown Scene");
+            timeForSceneChange = 10000;
             break;
     }
 

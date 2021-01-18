@@ -24,20 +24,42 @@
 #define TPPServo_DEBUG   // note that the debug prints in process() are not recommended because they
                             // slow the timer work
 
-#define MS_BETWEEN_MOVES 10  // we will not move any particular servo more ofen than this
+#define MS_BETWEEN_MOVES 1  // we will not move any particular servo more ofen than this
 #define MAX_SERVOS 6
 
 Logger logAniservo("app.aniservo");
 
+static Adafruit_PWMServoDriver pwm_; // = Adafruit_PWMServoDriver();
+
+/* ----- TPP_AnimateServo -----
+ *  class initializer. called each time the class is instantiated
+ */
+TPP_AnimateServo::TPP_AnimateServo(){
+    
+    initPWM(); // Calling a static function that will
+               // only be called once when the first instance of
+               // TPP_AnimateServo is created.
+
+}
+
+/* ----- initPWM -----
+ *  called from class initializer. 
+ *  Because this is declared static it will only be called once
+ *  when the first instance of this class is created.
+ */
+void TPP_AnimateServo::initPWM(){
+
+    pwm_ = Adafruit_PWMServoDriver();
+    pwm_.begin(); 
+    pwm_.setPWMFreq(60);  // Analog servos run at ~60 Hz updates
+
+}
 
 /*------ begin -----
  * servoNum: based on the AdaFruit servo driver board
  * position: where to set the servo on initialization
  */
 void TPP_AnimateServo::begin(int servoNumIn, int positionIn) {
-
-    pwm_.begin(); // XXX should we do this on each object, or just once overall?
-    pwm_.setPWMFreq(60);  // Analog servos run at ~60 Hz updates
 
     // store values in class variables
     servoNum_ = servoNumIn;
@@ -78,17 +100,17 @@ int TPP_AnimateServo::moveTo (int newPos, int speed) {
     }
 
     // How long do we anticipate the move will take?
-    if (speed != 0) {
-        estimatedMSToFinish = (abs((destination_-position_)/speed) * MS_BETWEEN_MOVES * 1.4);
-    }
-    
-    if (estimatedMSToFinish < 200) {
-        estimatedMSToFinish = 200;
-    }
+    int totalDistance = floor(abs((destination_ - position_)));
+    int servoMoveMS = totalDistance;
 
-    timeStart_ = millis();
-    logAniservo.trace("MoveTo, ServoNum: %i, pos: %.1f, dest: %i, inc: %.1f, estDur: %d", 
-              servoNum_, position_, destination_, increment_, estimatedMSToFinish);
+    int movesNeeded = totalDistance/speed + 1;
+    int movesMS = movesNeeded * MS_BETWEEN_MOVES + 20;
+
+    estimatedMSToFinish = (movesMS + servoMoveMS);
+
+    logAniservo.trace("MoveTo - ServoNum: %d, pos: %.1f, dest: %d, dist: %d inc: %.2f, movesNeeded: %d, estDur: %d", 
+              servoNum_, position_, destination_, totalDistance, increment_, movesNeeded, estimatedMSToFinish);
+
 
     return estimatedMSToFinish;
 

@@ -40,12 +40,9 @@
 
 Logger logHead("app.head");
 
-
-
 // ---------------------------------------------------------
 //-------------------   HEAD  ---------------------------
 //   Holds all other objects that are in the head
-
 
 /*----- process -----
  * called often to give the animation a chance to step forward
@@ -155,7 +152,7 @@ void TPP_Eyeball::process() {
  */
 int TPP_Eyeball::lookCenter(int speed){
 
-    logHead.info("eyeballs lookCenter");
+    logHead.trace("eyeballs lookCenter");
 
     int xMS = positionX(50,speed);
     int yMS = positionY(50, speed);
@@ -172,7 +169,7 @@ int TPP_Eyeball::lookCenter(int speed){
  */
 int TPP_Eyeball::positionX(int position, int speed) {
 
-    logHead.info("eyeballs positionX");
+    logHead.trace("eyeballs positionX");
 
     position = map(position, 0, 100, xmidPos+leftOffset, xmidPos+rightOffset );
     return xServo.moveTo(position, speed);
@@ -187,7 +184,7 @@ int TPP_Eyeball::positionX(int position, int speed) {
  */
 int TPP_Eyeball::positionY(int position, int speed) {
 
-    logHead.info("eyeballs positionY");
+    logHead.trace("eyeballs positionY");
 
     position = map(position, 0, 100, ymidPos+downOffset, ymidPos+upOffset);
     return yServo.moveTo(position, speed);
@@ -224,9 +221,10 @@ void TPP_Eyelid::process(){
 */
 int TPP_Eyelid::position(int position, int speed){
 
-    logHead.info("Eyelid to position %d%%", position);
-    position = map(position, 0, 100, closedPos, openPos);
-    return myServo.moveTo(position, speed);
+    logHead.trace("Eyelid to position %d%%, speed %d", position, speed);
+    int newPosition = map(position, 0, 100, closedPos, openPos);
+    int durationMS = myServo.moveTo(newPosition, speed);
+    return durationMS;
 
 }
 
