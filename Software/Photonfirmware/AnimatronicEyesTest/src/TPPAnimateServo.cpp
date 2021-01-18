@@ -29,15 +29,37 @@
 
 Logger logAniservo("app.aniservo");
 
+static Adafruit_PWMServoDriver pwm_; // = Adafruit_PWMServoDriver();
+
+/* ----- TPP_AnimateServo -----
+ *  class initializer. called each time the class is instantiated
+ */
+TPP_AnimateServo::TPP_AnimateServo(){
+    
+    initPWM(); // Calling a static function that will
+               // only be called once when the first instance of
+               // TPP_AnimateServo is created.
+
+}
+
+/* ----- initPWM -----
+ *  called from class initializer. 
+ *  Because this is declared static it will only be called once
+ *  when the first instance of this class is created.
+ */
+void TPP_AnimateServo::initPWM(){
+
+    pwm_ = Adafruit_PWMServoDriver();
+    pwm_.begin(); 
+    pwm_.setPWMFreq(60);  // Analog servos run at ~60 Hz updates
+
+}
 
 /*------ begin -----
  * servoNum: based on the AdaFruit servo driver board
  * position: where to set the servo on initialization
  */
 void TPP_AnimateServo::begin(int servoNumIn, int positionIn) {
-
-    pwm_.begin(); // XXX should we do this on each object, or just once overall?
-    pwm_.setPWMFreq(60);  // Analog servos run at ~60 Hz updates
 
     // store values in class variables
     servoNum_ = servoNumIn;

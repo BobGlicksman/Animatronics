@@ -13,20 +13,12 @@
  *    
  */ 
 
-// Original Source from:
-//  Nilheim Mechatronics Simplified Eye Mechanism Code
-//  Make sure you have the Adafruit servo driver library installed >>>>> https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library
-//  X-axis joystick pin: A1
-//  Y-axis joystick pin: A0
-//  Trim potentiometer pin: A2
-//  Button pin: D2
 
 const String version = "1.0";
  
 SYSTEM_MODE(MANUAL);
 
 #include <Wire.h>
-#include <TPPAnimateHead.h>
 #include <TPPAnimationList.h>
 
 #define CALLIBRATION_TEST 
@@ -35,8 +27,8 @@ SYSTEM_MODE(MANUAL);
 SerialLogHandler logHandler1(LOG_LEVEL_WARN, {  // Logging level for non-application messages
     { "app.main", LOG_LEVEL_INFO }               // Logging for main loop
     ,{ "app.head", LOG_LEVEL_INFO }               // Logging for Animate Head methods
-    ,{ "app.anilist", LOG_LEVEL_TRACE }               // Logging for Animation List methods
-    ,{ "app.aniservo", LOG_LEVEL_TRACE }          // Logging for Animate Servo details
+    ,{ "app.anilist", LOG_LEVEL_INFO }               // Logging for Animation List methods
+    ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
 });
 
 Logger mainLog("app.main");
@@ -164,6 +156,7 @@ void setup() {
     animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 0);
     animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 0);
 
+    animation1.addScene(sceneEyesAhead, MOVE_SPEED_SLOW, 0);
 
     animation1.addScene(sceneEyesClosed, 400, 0);
     animation1.addScene(sceneEyesOpen, 400, 1000);
@@ -199,17 +192,12 @@ void setup() {
     animation1.addScene(sceneEyesDown,5,-1);
     animation1.addScene(sceneEyesLeft, 5, 0);
 
-
  */
     //end position
     animation1.addScene(sceneEyesAhead, 3, -1);
     animation1.addScene(sceneEyesClosed, 1, 100);
 
    
-
-
-
-
     // xxx using the timer causes a crash
     // Start the animation timer 
     //animationTimer.start(); 
