@@ -17,6 +17,7 @@
 const String version = "1.0";
  
 SYSTEM_MODE(MANUAL);
+SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
 
 #include <Wire.h>
 #include <TPPAnimationList.h>
@@ -26,7 +27,7 @@ SYSTEM_MODE(MANUAL);
 
 SerialLogHandler logHandler1(LOG_LEVEL_WARN, {  // Logging level for non-application messages
     { "app.main", LOG_LEVEL_INFO }               // Logging for main loop
-    ,{ "app.head", LOG_LEVEL_INFO }               // Logging for Animate Head methods
+    ,{ "app.puppet", LOG_LEVEL_INFO }               // Logging for Animate puppet methods
     ,{ "app.anilist", LOG_LEVEL_INFO }               // Logging for Animation List methods
     ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
 });
@@ -118,13 +119,13 @@ void setup() {
     mainLog.info("===========================================");
     mainLog.info("Animate Eye Mechanism");
     
-    animation1.head.eyeballs.init(X_SERVO,X_POS_MID,X_POS_LEFT_OFFSET,X_POS_RIGHT_OFFSET,
+    animation1.puppet.eyeballs.init(X_SERVO,X_POS_MID,X_POS_LEFT_OFFSET,X_POS_RIGHT_OFFSET,
             Y_SERVO, Y_POS_MID, Y_POS_UP_OFFSET, Y_POS_DOWN_OFFSET);
 
-    animation1.head.eyelidLeftUpper.init(L_UPPERLID_SERVO, LEFT_UPPER_OPEN, LEFT_UPPER_CLOSED);
-    animation1.head.eyelidLeftLower.init(L_LOWERLID_SERVO, LEFT_LOWER_OPEN, LEFT_LOWER_CLOSED);
-    animation1.head.eyelidRightUpper.init(R_UPPERLID_SERVO, RIGHT_UPPER_OFFSET - LEFT_UPPER_OPEN, RIGHT_UPPER_OFFSET - LEFT_UPPER_CLOSED);
-    animation1.head.eyelidRightLower.init(R_LOWERLID_SERVO, RIGHT_LOWER_OFFSET - LEFT_LOWER_OPEN, RIGHT_LOWER_OFFSET - LEFT_LOWER_CLOSED);
+    animation1.puppet.eyelidLeftUpper.init(L_UPPERLID_SERVO, LEFT_UPPER_OPEN, LEFT_UPPER_CLOSED);
+    animation1.puppet.eyelidLeftLower.init(L_LOWERLID_SERVO, LEFT_LOWER_OPEN, LEFT_LOWER_CLOSED);
+    animation1.puppet.eyelidRightUpper.init(R_UPPERLID_SERVO, RIGHT_UPPER_OFFSET - LEFT_UPPER_OPEN, RIGHT_UPPER_OFFSET - LEFT_UPPER_CLOSED);
+    animation1.puppet.eyelidRightLower.init(R_LOWERLID_SERVO, RIGHT_LOWER_OFFSET - LEFT_LOWER_OPEN, RIGHT_LOWER_OFFSET - LEFT_LOWER_CLOSED);
 
 
     // Establish Animation List
@@ -169,20 +170,20 @@ void setup() {
 
 /*
 
-    animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, -1);
+    animation1.addScene(sceneEyesApuppet, MOVE_SPEED_FAST, -1);
     animation1.addScene(sceneEyesOpenWide,MOVE_SPEED_FAST,500);
 
     //animation1.addScene(sceneBlink, MOVE_SPEED_SLOW, 500);
     //animation1.addScene(sceneBlink, MOVE_SPEED_SLOW, 500);
 
     animation1.addScene(sceneEyesClosed, MOVE_SPEED_FAST, -1);
-    animation1.addScene(sceneEyesAhead, MOVE_SPEED_FAST, 1000);
+    animation1.addScene(sceneEyesApuppet, MOVE_SPEED_FAST, 1000);
 
     animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, -1);
     animation1.addScene(sceneEyesOpenWide, MOVE_SPEED_FAST, 2000);
 
     animation1.addScene(sceneEyesOpen, 5, -1);
-    animation1.addScene(sceneEyesAhead, 5, 1000);
+    animation1.addScene(sceneEyesApuppet, 5, 1000);
 
 
     animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, -1);

@@ -1,22 +1,23 @@
 /*
- * TPPAnimateHead.cpp
- * 
- * Team Practical Project eye mechanism control
+ * TPPAnimatePuppet.cpp
+  * Team Practical Project animatronic puppet control
  * 
  * This library uses the TPPAnimateServo library to control the AdaFruit_PWMServoDriver.
  * 
- * The library contains objects to control the eyeball mechanism and the four eyelids.
+ * The library contains objects to control mechanisms in the puppet. Today it holds
+ * the eyeball mechanism and the four eyelids.
  * 
  * Instantiate this class, and it will create an instance of the TPPAnimateServo library.
  * 
  * Classes: 
- *      Head:      holds eyeballs and eyelids and provides convenience functions to control them
+ *      Puppet:    holds objects that control all mechanisms. Includes convenience functions
+ *                 to command them. Today: eyeballs and eyelids.
  *      Eyeballs:  controls the x and y axis of the eyeballs
  *      Eyelid:    controls one eyelid
  *
  * 
  * Key methods
- *      head
+ *      Puppet
  *          .process()  called over and over to cause the servos to move from current
  *              position to the new target position. This function in turn calls process()
  *              on each of the other control objects
@@ -36,9 +37,9 @@
  * 
  */
 
-#include <TPPAnimateHead.h>
+#include <TPPAnimatePuppet.h>
 
-Logger logHead("app.head");
+Logger logPuppet("app.puppet");
 
 // ---------------------------------------------------------
 //-------------------   HEAD  ---------------------------
@@ -48,7 +49,7 @@ Logger logHead("app.head");
  * called often to give the animation a chance to step forward
  * This will call process() on all objects it owns.
 */
-void TPP_Head::process() {
+void TPP_Puppet::process() {
     
     eyeballs.process();
     eyelidLeftUpper.process();
@@ -60,8 +61,8 @@ void TPP_Head::process() {
 /*----- eyesOpen -----
  * position 0:closed, 100:wide open; speed 1-10
 */
-int TPP_Head::eyesOpen(int position, int speed){
-    logHead.info("eyesOpen %d%%",  position);
+int TPP_Puppet::eyesOpen(int position, int speed){
+    logPuppet.info("eyesOpen %d%%",  position);
     int time1 = eyelidLeftLower.position(position,speed);
     int time2 = eyelidLeftUpper.position(position,speed);
     int time3 = eyelidRightLower.position(position,speed);
@@ -75,9 +76,9 @@ int TPP_Head::eyesOpen(int position, int speed){
 /* ----- blink -----
  * both eyes close for an instant, then open to 50%
 */
-int TPP_Head::blink(){
+int TPP_Puppet::blink(){
 
-    logHead.info("Blink");
+    logPuppet.info("Blink");
 
     eyesOpen(0, MOVE_SPEED_FAST);
     delay(200);
@@ -89,9 +90,9 @@ int TPP_Head::blink(){
 /* ----- wink -----
  * one eye closes for an instant, then opens to 50%
 */
-int TPP_Head::wink(bool leftorright){
+int TPP_Puppet::wink(bool leftorright){
 
-    logHead.info("Wink");
+    logPuppet.info("Wink");
 
     if (leftorright) {
         eyelidLeftUpper.position(0,MOVE_SPEED_FAST);
@@ -130,7 +131,7 @@ void TPP_Eyeball::init(int xservoNumIn, int xmidPosIn, int leftOffsetIn, int rig
     upOffset = upOffsetIn;
     downOffset = downOffsetIn;
 
-    logHead.trace("eyeball init %d %d %d ",xservoNumIn,  xmidPosIn,  xmidPos);
+    logPuppet.trace("eyeball init %d %d %d ",xservoNumIn,  xmidPosIn,  xmidPos);
     xServo.begin(xservoNumIn, xmidPos);
     yServo.begin(yservoNumIn, ymidPos);
 
@@ -152,7 +153,7 @@ void TPP_Eyeball::process() {
  */
 int TPP_Eyeball::lookCenter(int speed){
 
-    logHead.trace("eyeballs lookCenter");
+    logPuppet.trace("eyeballs lookCenter");
 
     int xMS = positionX(50,speed);
     int yMS = positionY(50, speed);
@@ -169,7 +170,7 @@ int TPP_Eyeball::lookCenter(int speed){
  */
 int TPP_Eyeball::positionX(int position, int speed) {
 
-    logHead.trace("eyeballs positionX");
+    logPuppet.trace("eyeballs positionX");
 
     position = map(position, 0, 100, xmidPos+leftOffset, xmidPos+rightOffset );
     return xServo.moveTo(position, speed);
@@ -184,7 +185,7 @@ int TPP_Eyeball::positionX(int position, int speed) {
  */
 int TPP_Eyeball::positionY(int position, int speed) {
 
-    logHead.trace("eyeballs positionY");
+    logPuppet.trace("eyeballs positionY");
 
     position = map(position, 0, 100, ymidPos+downOffset, ymidPos+upOffset);
     return yServo.moveTo(position, speed);
@@ -221,7 +222,7 @@ void TPP_Eyelid::process(){
 */
 int TPP_Eyelid::position(int position, int speed){
 
-    logHead.trace("Eyelid to position %d%%, speed %d", position, speed);
+    logPuppet.trace("Eyelid to position %d%%, speed %d", position, speed);
     int newPosition = map(position, 0, 100, closedPos, openPos);
     int durationMS = myServo.moveTo(newPosition, speed);
     return durationMS;

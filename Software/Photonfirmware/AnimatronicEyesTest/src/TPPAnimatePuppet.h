@@ -1,22 +1,24 @@
 /*
- * TPPAnimateHead.h
+ * TPPAnimatePuppet.h
  * 
- * Team Practical Project eye mechanism control
+ * Team Practical Project animatronic puppet control
  * 
  * This library uses the TPPAnimateServo library to control the AdaFruit_PWMServoDriver.
  * 
- * The library contains objects to control the eyeball mechanism and the four eyelids.
+ * The library contains objects to control mechanisms in the puppet. Today it holds
+ * the eyeball mechanism and the four eyelids.
  * 
  * Instantiate this class, and it will create an instance of the TPPAnimateServo library.
  * 
  * Classes: 
- *      Head:      holds eyeballs and eyelids and provides convenience functions to control them
+ *      Puppet:    holds objects that control all mechanisms. Includes convenience functions
+ *                 to command them. Today: eyeballs and eyelids.
  *      Eyeballs:  controls the x and y axis of the eyeballs
  *      Eyelid:    controls one eyelid
  *
  * 
  * Key methods
- *      head
+ *      Puppet
  *          .process()  called over and over to cause the servos to move from current
  *              position to the new target position. This function in turn calls process()
  *              on each of the other control objects
@@ -36,8 +38,8 @@
  * 
  */
 
-#ifndef _TPP_TPPAnimateHead_H
-#define _TPP_TPPAnimateHead_H
+#ifndef _TPP_TPPAnimatePuppet_H
+#define _TPP_TPPAnimatePuppet_H
 
 #include <TPPAnimateServo.h>
 
@@ -83,7 +85,7 @@ class TPP_Eyelid {
 };
 
 // TPP_Head holds all the other objects that map to a servo(s)
-class TPP_Head {
+class TPP_Puppet {
 
     public:
         void process();

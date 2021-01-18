@@ -3,7 +3,7 @@
  * 
  * Team Practical Project animation scene control
  * 
- * This library uses the TPPAnimateHead library to control the mechanisms in the head.
+ * This library uses the TPPAnimatepuppet library to control the mechanisms in the puppet.
  * It is initialized with a set of "scenes". Each scene is listed in the eScene enumeration. 
  * Given a series of scenes this library will then move the mechanism objects through those
  * scenes. Each scene that is added to the list also contains a "speed" used to move
@@ -24,7 +24,7 @@
  * while the eyelids also close slowly. To do this, add a scene to move the eyes with 
  * delay -1 followed by a scene to close the lids.
  *  
- * Instantiate this class, and it will create an instance of the TPPAnimateHead library.
+ * Instantiate this class, and it will create an instance of the TPPAnimatepuppet library.
  * 
  * Key methods
  *      .process()  called over and over to cause the objects to move from current
@@ -172,7 +172,7 @@ void animationList::process() {
         eScene thisScene = sceneList_[currentSceneIndex_].scene;
         float thisSpeed = sceneList_[currentSceneIndex_].speed;
 
-        timeToFinishScene_ = setScene(thisScene, thisSpeed); //XXX, &head);
+        timeToFinishScene_ = setScene(thisScene, thisSpeed); //XXX, &puppet);
 
         // Should we wait for the servos to finish moving?
         if (sceneList_[currentSceneIndex_].delayAfterMoveMS > -1 ){
@@ -184,14 +184,14 @@ void animationList::process() {
         logAnilist.trace("Next scene at: %d",nextSceneChangeMS_);
     }
 
-    head.process();
+    puppet.process();
 
 }
 
 // setScene
 // Positions the objects to their positions for the scene
 // Returns the estimated time to reach the scene
-int animationList::setScene(eScene newScene, int speed){ //, TPP_Head *theHead){ XXX
+int animationList::setScene(eScene newScene, int speed){ //, TPP_puppet *thepuppet){ XXX
 
     int timeForSceneChange = 0;
 
@@ -201,52 +201,52 @@ int animationList::setScene(eScene newScene, int speed){ //, TPP_Head *theHead){
     switch (newScene) {
 
         case sceneEyesAheadOpen:
-            timeForSceneChange = head.eyeballs.lookCenter(speed) ;
-            timeForSceneChange = head.eyesOpen(50, speed);
+            timeForSceneChange = puppet.eyeballs.lookCenter(speed) ;
+            timeForSceneChange = puppet.eyesOpen(50, speed);
             break;
 
         case sceneEyesAhead: 
-            timeForSceneChange = head.eyeballs.lookCenter(speed) ;
+            timeForSceneChange = puppet.eyeballs.lookCenter(speed) ;
             break;
 
         case sceneEyesOpenWide:
-            timeForSceneChange = head.eyesOpen(100,speed); 
+            timeForSceneChange = puppet.eyesOpen(100,speed); 
             break;
 
         case sceneEyesOpen:
-            timeForSceneChange = head.eyesOpen(50,speed); 
+            timeForSceneChange = puppet.eyesOpen(50,speed); 
             break;
 
         case sceneEyesClosed:
-            timeForSceneChange = head.eyesOpen(0,speed);    
+            timeForSceneChange = puppet.eyesOpen(0,speed);    
             break;
 
         case sceneEyesRight:
-            timeForSceneChange = head.eyeballs.positionX(100,speed); 
+            timeForSceneChange = puppet.eyeballs.positionX(100,speed); 
             break;
         
         case sceneEyesLeft:
-            timeForSceneChange = head.eyeballs.positionX(0,speed); 
+            timeForSceneChange = puppet.eyeballs.positionX(0,speed); 
             break;
 
         case sceneEyesUp:
-            timeForSceneChange = head.eyeballs.positionY(100,speed);
+            timeForSceneChange = puppet.eyeballs.positionY(100,speed);
             break;
 
         case sceneEyesDown:
-            timeForSceneChange = head.eyeballs.positionY(0,speed);
+            timeForSceneChange = puppet.eyeballs.positionY(0,speed);
             break;
 
         case sceneBlink:
-            timeForSceneChange = head.blink();
+            timeForSceneChange = puppet.blink();
             break;
 
         case sceneWinkLeft:
-            timeForSceneChange = head.wink(true);
+            timeForSceneChange = puppet.wink(true);
             break;
 
         case sceneWinkRight:
-            timeForSceneChange = head.wink(false);
+            timeForSceneChange = puppet.wink(false);
             break;
 
         default:

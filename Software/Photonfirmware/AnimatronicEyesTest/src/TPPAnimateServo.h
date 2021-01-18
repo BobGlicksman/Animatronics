@@ -44,8 +44,8 @@ class TPP_AnimateServo{
         int moveTo (int newX, int speed);
 
     private:
+        
         static void initPWM();      // called once in the class inititator to init pwm library
-
         int servoNum_ = 0;          // Number of this servo on the driver board 
         float position_ = -1;       // the current position of the servo
         int destination_ = 0;       // the position we are heading towards

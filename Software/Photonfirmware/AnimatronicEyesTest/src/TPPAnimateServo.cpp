@@ -29,7 +29,7 @@
 
 Logger logAniservo("app.aniservo");
 
-static Adafruit_PWMServoDriver pwm_; // = Adafruit_PWMServoDriver();
+static Adafruit_PWMServoDriver pwm_; 
 
 /* ----- TPP_AnimateServo -----
  *  class initializer. called each time the class is instantiated

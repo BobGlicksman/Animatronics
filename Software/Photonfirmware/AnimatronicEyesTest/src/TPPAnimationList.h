@@ -49,7 +49,7 @@
 
 #define MAX_SCENE 100
 
-#include <TPPAnimateHead.h>
+#include <TPPAnimatePuppet.h>
 //#include <Wire.h> // DO NOT USE Serial.anything, it is not thread safe. Use Log.
 
 enum eScene {
@@ -77,7 +77,7 @@ class animationList {
         int isRunning();
         void stopRunning();
         void clearSceneList();
-        TPP_Head head;
+        TPP_Puppet puppet;
 
     private: 
         struct sceneInfo {
