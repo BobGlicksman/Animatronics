@@ -130,43 +130,82 @@ void setup() {
 
     // Establish Animation List
 
-    animation1.addScene(sceneEyesAhead, MOVE_SPEED_SLOW, -1);
-    animation1.addScene(sceneEyesClosed, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_IMMEDIATE, -1);
+    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, 0);
+   
+    // xxx using the timer causes a crash
+    // Start the animation timer 
+    //animationTimer.start(); 
+
+    animation1.startRunning();
+    animation1.process();
+
+    sequenceGeneralTests();
     
-    animation1.addScene(sceneEyesAheadOpen, MOVE_SPEED_SLOW, 0);
+}
 
-    animation1.addScene(sceneEyesRight, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesLeft, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesRight, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesLeft, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesRight, MOVE_SPEED_SLOW, 0);
+//------- MAIN LOOP --------------
+void loop() {
 
-    animation1.addScene(sceneEyesLeft, MOVE_SPEED_FAST, 0);
-    animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, 0);
-    animation1.addScene(sceneEyesLeft, MOVE_SPEED_FAST, 0);
-    animation1.addScene(sceneEyesRight, MOVE_SPEED_FAST, 0);
+    static bool firstLoop = true;
 
-    animation1.addScene(sceneEyesAhead, MOVE_SPEED_SLOW, 0);
+    if (firstLoop){
 
-    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesUp, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesDown, MOVE_SPEED_SLOW, 0);
+        firstLoop = false;
+        mainLog.info("start up");
 
-    animation1.addScene(sceneEyesAhead, MOVE_SPEED_SLOW, 0);
+    }
 
-    animation1.addScene(sceneEyesClosed, 400, 0);
-    animation1.addScene(sceneEyesOpen, 400, 1000);
-    animation1.addScene(sceneEyesClosed, 400, 0);
-    animation1.addScene(sceneEyesOpen, 400, 1000);
-    animation1.addScene(sceneEyesClosed, 400, 0);
-    animation1.addScene(sceneEyesOpen, 400, 1000);
-    animation1.addScene(sceneEyesClosed, 400, 0);
-    animation1.addScene(sceneEyesOpen, 400, 1000);
+    animationTimerCallback();
+
+}
+
+void sequenceStartStandard() {
+
+    animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, -1);
+    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_SLOW, 0);
+
+}
+
+void sequenceEndStandard() {
+
+    animation1.addScene(sceneEyesAhead, -1, 3, -1);
+    animation1.addScene(sceneEyesOpen, 50, 1, 100);
+}
+
+void sequenceGeneralTests () {
+
+    sequenceStartStandard();
+      
+    animation1.addScene(sceneEyesAheadOpen, -1, MOVE_SPEED_SLOW, 0);
+
+    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesLeft, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesLeft, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_SLOW, 0);
+
+    animation1.addScene(sceneEyesLeft, -1, MOVE_SPEED_FAST, 0);
+    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_FAST, 0);
+    animation1.addScene(sceneEyesLeft, -1, MOVE_SPEED_FAST, 0);
+    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_FAST, 0);
+
+    animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, 0);
+
+    animation1.addScene(sceneEyesUp, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesDown, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUp, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesDown, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUp, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesDown, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUp, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesDown, -1, MOVE_SPEED_SLOW, 0);
+
+    animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, 0);
+
+    animation1.addScene(sceneEyesOpen, 50, MOVE_SPEED_IMMEDIATE, 0);
+    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, 1000);
+    
 
 /*
 
@@ -194,35 +233,17 @@ void setup() {
     animation1.addScene(sceneEyesLeft, 5, 0);
 
  */
-    //end position
-    animation1.addScene(sceneEyesAhead, 3, -1);
-    animation1.addScene(sceneEyesClosed, 1, 100);
 
-   
-    // xxx using the timer causes a crash
-    // Start the animation timer 
-    //animationTimer.start(); 
-
-    animation1.startRunning();
-    
-}
-
-//------- MAIN LOOP --------------
-void loop() {
-
-    static bool firstLoop = true;
-
-    if (firstLoop){
-
-        firstLoop = false;
-        mainLog.info("start up");
-
-    }
-
-    animationTimerCallback();
+    sequenceEndStandard();
 
 }
 
 
+void sequenceWakeUpSlowly() {
+
+    sequenceStartStandard();
 
 
+
+
+}

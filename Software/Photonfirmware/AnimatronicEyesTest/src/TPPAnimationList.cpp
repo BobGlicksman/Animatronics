@@ -49,16 +49,14 @@
 Logger logAnilist("app.anilist");
 
 // The order of these must correspond to the order in the eScene enumeration
-const char* eSceneNames[12] {
+const char* eSceneNames[10] {
     "sceneEyesAheadOpen",
     "sceneEyesAhead",
     "sceneEyesRight",
     "sceneEyesLeft",
     "sceneEyesUp",
     "sceneEyesDown",
-    "sceneEyesClosed",
     "sceneEyesOpen",
-    "sceneEyesOpenWide",
     "sceneWinkLeft",
     "sceneWinkRight",
     "sceneBlink"
@@ -68,6 +66,8 @@ const char* eSceneNames[12] {
  * Adds a scene to the end of the animation scene list
  * parameters
  *    scene: one of the scenes in the eScene enumeration
+ *    modifier: an int passed down to the scene setting routine. No standard 
+ *      definition.
  *    speed: 1-10.  10 is fast
  *    daylayAfterMoveMS: how long to delay before the next scene,
  *       after the servos should be finished with this scene. 
@@ -76,7 +76,7 @@ const char* eSceneNames[12] {
  *           scene set. e.g. open eyes but don't wait to finish, start
  *           moving eyes right away.
  */
-int animationList::addScene(eScene sceneIn, int speedIn, int delayAfterMoveMSIn){
+int animationList::addScene(eScene sceneIn, int modifierIn, int speedIn, int delayAfterMoveMSIn){
 
     // is there room for another scene?
     if (lastSceneIndex_ == MAX_SCENE - 1) {
@@ -87,6 +87,7 @@ int animationList::addScene(eScene sceneIn, int speedIn, int delayAfterMoveMSIn)
     // add new scene to end of list
     lastSceneIndex_++;
     sceneList_[lastSceneIndex_].scene = sceneIn;
+    sceneList_[lastSceneIndex_].modifier = modifierIn;
     sceneList_[lastSceneIndex_].speed = speedIn;
     sceneList_[lastSceneIndex_].delayAfterMoveMS = delayAfterMoveMSIn;
 
@@ -170,9 +171,10 @@ void animationList::process() {
         logAnilist.trace("Changing scene now to %s", eSceneNames[sceneList_[currentSceneIndex_].scene]);
 
         eScene thisScene = sceneList_[currentSceneIndex_].scene;
+        int thisModifier = sceneList_[currentSceneIndex_].modifier;
         float thisSpeed = sceneList_[currentSceneIndex_].speed;
 
-        timeToFinishScene_ = setScene(thisScene, thisSpeed); //XXX, &puppet);
+        timeToFinishScene_ = setScene(thisScene, thisModifier, thisSpeed); //XXX, &puppet);
 
         // Should we wait for the servos to finish moving?
         if (sceneList_[currentSceneIndex_].delayAfterMoveMS > -1 ){
@@ -191,7 +193,7 @@ void animationList::process() {
 // setScene
 // Positions the objects to their positions for the scene
 // Returns the estimated time to reach the scene
-int animationList::setScene(eScene newScene, int speed){ //, TPP_puppet *thepuppet){ XXX
+int animationList::setScene(eScene newScene, int modifier, int speed){ //, TPP_puppet *thepuppet){ XXX
 
     int timeForSceneChange = 0;
 
@@ -209,16 +211,9 @@ int animationList::setScene(eScene newScene, int speed){ //, TPP_puppet *thepupp
             timeForSceneChange = puppet.eyeballs.lookCenter(speed) ;
             break;
 
-        case sceneEyesOpenWide:
-            timeForSceneChange = puppet.eyesOpen(100,speed); 
-            break;
-
         case sceneEyesOpen:
-            timeForSceneChange = puppet.eyesOpen(50,speed); 
-            break;
-
-        case sceneEyesClosed:
-            timeForSceneChange = puppet.eyesOpen(0,speed);    
+            // modifier is how far open. 0:closed 100:open wide
+            timeForSceneChange = puppet.eyesOpen(modifier,speed); 
             break;
 
         case sceneEyesRight:

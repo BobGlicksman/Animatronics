@@ -59,9 +59,7 @@ enum eScene {
     sceneEyesLeft,
     sceneEyesUp,
     sceneEyesDown,
-    sceneEyesClosed,
     sceneEyesOpen,
-    sceneEyesOpenWide,
     sceneWinkLeft,
     sceneWinkRight,
     sceneBlink
@@ -71,7 +69,7 @@ enum eScene {
 
 class animationList {
     public:
-        int addScene(eScene scene, int speed, int delayAfterMoveMS);
+        int addScene(eScene scene, int modifier, int speed, int delayAfterMoveMS);
         void process();
         void startRunning();
         int isRunning();
@@ -82,17 +80,20 @@ class animationList {
     private: 
         struct sceneInfo {
             eScene scene;
+            int modifier;
             int speed;
             int delayAfterMoveMS;
         };
-        
+        sceneInfo sceneList_[MAX_SCENE]; // list of scenes to be played in order
+       
+        int setScene(eScene newScene, int modifier, int speed); //XXX, TPP_Head *theHead);
+
         int currentSceneIndex_ = 0;     // index into sceneList of the scene currently displayed
         int lastSceneIndex_ = -1;       // index into sceneList of the last valid scene
         int nextSceneChangeMS_ = 0;    // millis() when the scene should move to the next in the sceneList
         bool isRunning_ = false;
-        sceneInfo sceneList_[MAX_SCENE]; // list of scenes to be played in order
 
-        int setScene(eScene newScene, int speed); //XXX, TPP_Head *theHead);
 };
+
 
 #endif
