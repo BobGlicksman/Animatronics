@@ -43,6 +43,12 @@
 
 #include <TPPAnimateServo.h>
 
+// position definitions to make control easier
+#define eyelidWideOpen 100
+#define eyelidClosed 0
+#define eyelidNormal 50
+#define eyelidSlit 20
+
 
 
 class TPP_Eyeball {
@@ -51,9 +57,9 @@ class TPP_Eyeball {
         void init(int xservoNum, int xmidPos, int leftOffset, int rightOffset, 
              int yservoNum, int ymidPos, int upOffset, int downOffset);
         void process();
-        int positionX(int position, int speed);
-        int positionY(int position, int speed); 
-        int lookCenter(int speed);
+        int positionX(int position, float speed);
+        int positionY(int position, float speed); 
+        int lookCenter(float speed);
 
     private:
         int xservoNum;
@@ -74,7 +80,7 @@ class TPP_Eyelid {
     public:
         void init(int servoNum, int openPos, int closedPos);
         void process();
-        int position(int position, int speed);
+        int position(int position, float speed);
 
     private:
         int servoNum;
@@ -89,7 +95,7 @@ class TPP_Puppet {
 
     public:
         void process();
-        int eyesOpen(int position, int speed);
+        int eyesOpen(int position, float speed);
         int blink();
         int wink(bool leftorright);
 

@@ -21,6 +21,7 @@ SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer t
 
 #include <Wire.h>
 #include <TPPAnimationList.h>
+#include <TPPAnimatePuppet.h>
 
 #define CALLIBRATION_TEST 
 #define DEBUGON
@@ -160,22 +161,12 @@ void loop() {
 
 }
 
-void sequenceStartStandard() {
-
-    animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, -1);
-    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_SLOW, 0);
-
-}
-
-void sequenceEndStandard() {
-
-    animation1.addScene(sceneEyesAhead, -1, 3, -1);
-    animation1.addScene(sceneEyesOpen, 50, 1, 100);
-}
 
 void sequenceGeneralTests () {
 
-    sequenceStartStandard();
+    sequenceAsleep(2000);
+
+    sequenceWakeUpSlowly(5000);
       
     animation1.addScene(sceneEyesAheadOpen, -1, MOVE_SPEED_SLOW, 0);
 
@@ -203,8 +194,14 @@ void sequenceGeneralTests () {
 
     animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, 0);
 
-    animation1.addScene(sceneEyesOpen, 50, MOVE_SPEED_IMMEDIATE, 0);
-    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, 1000);
+    sequenceBlinkEyes(1000);
+    sequenceBlinkEyes(1000);
+    sequenceBlinkEyes(1000);
+    sequenceBlinkEyes(1000);
+    sequenceBlinkEyes(1000);
+
+
+    
     
 
 /*
@@ -239,11 +236,56 @@ void sequenceGeneralTests () {
 }
 
 
-void sequenceWakeUpSlowly() {
+void sequenceWakeUpSlowly(int delayAfterMS) {
 
-    sequenceStartStandard();
+    sequenceAsleep(1000);
+
+    sequenceEyesWake(delayAfterMS); //left eye
 
 
 
 
+}
+
+
+void sequenceAsleep(int delayAfterMS) {
+
+    animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_IMMEDIATE, -1);
+    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, delayAfterMS);
+
+}
+
+void sequenceEyesWake(int delayAfterMS){
+
+    animation1.addScene(sceneEyesOpen, eyelidSlit, MOVE_SPEED_SLOW, 500);
+    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesLeft, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, -1);
+    animation1.addScene(sceneEyesOpen, eyelidClosed, MOVE_SPEED_SLOW,1000);
+    animation1.addScene(sceneEyesOpen, eyelidSlit, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesOpen, eyelidClosed, MOVE_SPEED_SLOW,1000);
+    animation1.addScene(sceneEyesOpen, eyelidNormal, MOVE_SPEED_SLOW, 0);
+    sequenceBlinkEyes(delayAfterMS);
+
+
+
+}
+
+void sequenceEndStandard() {
+
+    animation1.addScene(sceneEyesAhead, -1, 3, -1);
+    animation1.addScene(sceneEyesOpen, 50, 1, 100);
+}
+
+void sequenceBlinkEyes(int delayAfterMS) {
+
+    // another way to do it
+    //animation1.addScene(sceneEyesOpen, eyelidClosed, MOVE_SPEED_IMMEDIATE, 0);
+    //animation1.addScene(sceneEyesOpen, eyelidNormal, MOVE_SPEED_IMMEDIATE, delayAfterMS);
+
+    animation1.addScene(sceneEyelidsRight, eyelidClosed, MOVE_SPEED_IMMEDIATE, -1);
+    animation1.addScene(sceneEyelidsLeft, eyelidClosed, MOVE_SPEED_IMMEDIATE, 0);
+    animation1.addScene(sceneEyelidsRight, eyelidNormal, MOVE_SPEED_IMMEDIATE, -1);
+    animation1.addScene(sceneEyelidsLeft, eyelidNormal, MOVE_SPEED_IMMEDIATE, delayAfterMS);
+    
 }

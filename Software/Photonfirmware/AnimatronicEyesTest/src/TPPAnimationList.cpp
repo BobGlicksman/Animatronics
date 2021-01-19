@@ -57,8 +57,8 @@ const char* eSceneNames[10] {
     "sceneEyesUp",
     "sceneEyesDown",
     "sceneEyesOpen",
-    "sceneWinkLeft",
-    "sceneWinkRight",
+    "sceneEyelidsLeft",
+    "sceneEyelidsRight",
     "sceneBlink"
 };
 
@@ -76,7 +76,7 @@ const char* eSceneNames[10] {
  *           scene set. e.g. open eyes but don't wait to finish, start
  *           moving eyes right away.
  */
-int animationList::addScene(eScene sceneIn, int modifierIn, int speedIn, int delayAfterMoveMSIn){
+int animationList::addScene(eScene sceneIn, int modifierIn, float speedIn, int delayAfterMoveMSIn){
 
     // is there room for another scene?
     if (lastSceneIndex_ == MAX_SCENE - 1) {
@@ -193,11 +193,11 @@ void animationList::process() {
 // setScene
 // Positions the objects to their positions for the scene
 // Returns the estimated time to reach the scene
-int animationList::setScene(eScene newScene, int modifier, int speed){ //, TPP_puppet *thepuppet){ XXX
+int animationList::setScene(eScene newScene, int modifier, float speed){ //, TPP_puppet *thepuppet){ XXX
 
     int timeForSceneChange = 0;
 
-    logAnilist.info("now setting scene %s with speed %d ", eSceneNames[newScene], speed);
+    logAnilist.info("now setting scene %s with speed %.2f ", eSceneNames[newScene], speed);
 
     // For each scene in the eNum scene, we set the servos to their positions
     switch (newScene) {
@@ -236,12 +236,14 @@ int animationList::setScene(eScene newScene, int modifier, int speed){ //, TPP_p
             timeForSceneChange = puppet.blink();
             break;
 
-        case sceneWinkLeft:
-            timeForSceneChange = puppet.wink(true);
+        case sceneEyelidsLeft:
+            timeForSceneChange = puppet.eyelidLeftUpper.position(modifier, speed);
+            timeForSceneChange = puppet.eyelidLeftLower.position(modifier, speed);
             break;
 
-        case sceneWinkRight:
-            timeForSceneChange = puppet.wink(false);
+        case sceneEyelidsRight:
+            timeForSceneChange = puppet.eyelidRightUpper.position(modifier, speed);
+            timeForSceneChange = puppet.eyelidRightLower.position(modifier, speed);
             break;
 
         default:
