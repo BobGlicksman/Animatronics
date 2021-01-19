@@ -141,7 +141,8 @@ void setup() {
     animation1.startRunning();
     animation1.process();
 
-    sequenceGeneralTests();
+    //sequenceGeneralTests();
+    sequenceLookReal();
     
 }
 
@@ -235,15 +236,17 @@ void sequenceGeneralTests () {
 
 }
 
+void sequenceLookReal() {
+
+    sequenceWakeUpSlowly(5000);
+
+}
 
 void sequenceWakeUpSlowly(int delayAfterMS) {
 
-    sequenceAsleep(1000);
+    sequenceAsleep(3000);
 
-    sequenceEyesWake(delayAfterMS); //left eye
-
-
-
+    sequenceEyesWake(delayAfterMS); 
 
 }
 
@@ -257,17 +260,15 @@ void sequenceAsleep(int delayAfterMS) {
 
 void sequenceEyesWake(int delayAfterMS){
 
-    animation1.addScene(sceneEyesOpen, eyelidSlit, MOVE_SPEED_SLOW, 500);
-    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesLeft, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, -1);
-    animation1.addScene(sceneEyesOpen, eyelidClosed, MOVE_SPEED_SLOW,1000);
-    animation1.addScene(sceneEyesOpen, eyelidSlit, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesOpen, eyelidClosed, MOVE_SPEED_SLOW,1000);
-    animation1.addScene(sceneEyesOpen, eyelidNormal, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesOpen, eyelidSlit, .1, -1);
+    animation1.addScene(sceneEyesRight, -1, .1, 1000);
+    animation1.addScene(sceneEyesLeft, -1, .1, 2000);
+    animation1.addScene(sceneEyesAhead, -1, .5, -1);
+    animation1.addScene(sceneEyesOpen, eyelidClosed, .1,1000);
+    animation1.addScene(sceneEyesOpen, eyelidSlit, .1, 1000);
+    animation1.addScene(sceneEyesOpen, eyelidClosed, .1,1000);
+    animation1.addScene(sceneEyesOpen, eyelidNormal, MOVE_SPEED_SLOW, 1000);
     sequenceBlinkEyes(delayAfterMS);
-
-
 
 }
 
