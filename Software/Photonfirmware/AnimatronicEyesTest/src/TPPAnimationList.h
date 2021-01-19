@@ -49,7 +49,7 @@
 
 #define MAX_SCENE 100
 
-#include <TPPAnimateHead.h>
+#include <TPPAnimatePuppet.h>
 //#include <Wire.h> // DO NOT USE Serial.anything, it is not thread safe. Use Log.
 
 enum eScene {
@@ -59,11 +59,9 @@ enum eScene {
     sceneEyesLeft,
     sceneEyesUp,
     sceneEyesDown,
-    sceneEyesClosed,
     sceneEyesOpen,
-    sceneEyesOpenWide,
-    sceneWinkLeft,
-    sceneWinkRight,
+    sceneEyelidsLeft,
+    sceneEyelidsRight,
     sceneBlink
 };
 
@@ -71,28 +69,31 @@ enum eScene {
 
 class animationList {
     public:
-        int addScene(eScene scene, int speed, int delayAfterMoveMS);
+        int addScene(eScene scene, int modifier, float speed, int delayAfterMoveMS);
         void process();
         void startRunning();
         int isRunning();
         void stopRunning();
         void clearSceneList();
-        TPP_Head head;
+        TPP_Puppet puppet;
 
     private: 
         struct sceneInfo {
             eScene scene;
-            int speed;
+            int modifier;
+            float speed;
             int delayAfterMoveMS;
         };
-        
+        sceneInfo sceneList_[MAX_SCENE]; // list of scenes to be played in order
+       
+        int setScene(eScene newScene, int modifier, float speed); //XXX, TPP_Head *theHead);
+
         int currentSceneIndex_ = 0;     // index into sceneList of the scene currently displayed
         int lastSceneIndex_ = -1;       // index into sceneList of the last valid scene
         int nextSceneChangeMS_ = 0;    // millis() when the scene should move to the next in the sceneList
         bool isRunning_ = false;
-        sceneInfo sceneList_[MAX_SCENE]; // list of scenes to be played in order
 
-        int setScene(eScene newScene, int speed); //XXX, TPP_Head *theHead);
 };
+
 
 #endif

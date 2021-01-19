@@ -3,7 +3,7 @@
  * 
  * Team Practical Project animation scene control
  * 
- * This library uses the TPPAnimateHead library to control the mechanisms in the head.
+ * This library uses the TPPAnimatepuppet library to control the mechanisms in the puppet.
  * It is initialized with a set of "scenes". Each scene is listed in the eScene enumeration. 
  * Given a series of scenes this library will then move the mechanism objects through those
  * scenes. Each scene that is added to the list also contains a "speed" used to move
@@ -24,7 +24,7 @@
  * while the eyelids also close slowly. To do this, add a scene to move the eyes with 
  * delay -1 followed by a scene to close the lids.
  *  
- * Instantiate this class, and it will create an instance of the TPPAnimateHead library.
+ * Instantiate this class, and it will create an instance of the TPPAnimatepuppet library.
  * 
  * Key methods
  *      .process()  called over and over to cause the objects to move from current
@@ -49,18 +49,16 @@
 Logger logAnilist("app.anilist");
 
 // The order of these must correspond to the order in the eScene enumeration
-const char* eSceneNames[12] {
+const char* eSceneNames[10] {
     "sceneEyesAheadOpen",
     "sceneEyesAhead",
     "sceneEyesRight",
     "sceneEyesLeft",
     "sceneEyesUp",
     "sceneEyesDown",
-    "sceneEyesClosed",
     "sceneEyesOpen",
-    "sceneEyesOpenWide",
-    "sceneWinkLeft",
-    "sceneWinkRight",
+    "sceneEyelidsLeft",
+    "sceneEyelidsRight",
     "sceneBlink"
 };
 
@@ -68,6 +66,8 @@ const char* eSceneNames[12] {
  * Adds a scene to the end of the animation scene list
  * parameters
  *    scene: one of the scenes in the eScene enumeration
+ *    modifier: an int passed down to the scene setting routine. No standard 
+ *      definition.
  *    speed: 1-10.  10 is fast
  *    daylayAfterMoveMS: how long to delay before the next scene,
  *       after the servos should be finished with this scene. 
@@ -76,7 +76,7 @@ const char* eSceneNames[12] {
  *           scene set. e.g. open eyes but don't wait to finish, start
  *           moving eyes right away.
  */
-int animationList::addScene(eScene sceneIn, int speedIn, int delayAfterMoveMSIn){
+int animationList::addScene(eScene sceneIn, int modifierIn, float speedIn, int delayAfterMoveMSIn){
 
     // is there room for another scene?
     if (lastSceneIndex_ == MAX_SCENE - 1) {
@@ -87,6 +87,7 @@ int animationList::addScene(eScene sceneIn, int speedIn, int delayAfterMoveMSIn)
     // add new scene to end of list
     lastSceneIndex_++;
     sceneList_[lastSceneIndex_].scene = sceneIn;
+    sceneList_[lastSceneIndex_].modifier = modifierIn;
     sceneList_[lastSceneIndex_].speed = speedIn;
     sceneList_[lastSceneIndex_].delayAfterMoveMS = delayAfterMoveMSIn;
 
@@ -170,9 +171,10 @@ void animationList::process() {
         logAnilist.trace("Changing scene now to %s", eSceneNames[sceneList_[currentSceneIndex_].scene]);
 
         eScene thisScene = sceneList_[currentSceneIndex_].scene;
+        int thisModifier = sceneList_[currentSceneIndex_].modifier;
         float thisSpeed = sceneList_[currentSceneIndex_].speed;
 
-        timeToFinishScene_ = setScene(thisScene, thisSpeed); //XXX, &head);
+        timeToFinishScene_ = setScene(thisScene, thisModifier, thisSpeed); //XXX, &puppet);
 
         // Should we wait for the servos to finish moving?
         if (sceneList_[currentSceneIndex_].delayAfterMoveMS > -1 ){
@@ -184,69 +186,64 @@ void animationList::process() {
         logAnilist.trace("Next scene at: %d",nextSceneChangeMS_);
     }
 
-    head.process();
+    puppet.process();
 
 }
 
 // setScene
 // Positions the objects to their positions for the scene
 // Returns the estimated time to reach the scene
-int animationList::setScene(eScene newScene, int speed){ //, TPP_Head *theHead){ XXX
+int animationList::setScene(eScene newScene, int modifier, float speed){ //, TPP_puppet *thepuppet){ XXX
 
     int timeForSceneChange = 0;
 
-    logAnilist.info("now setting scene %s with speed %d ", eSceneNames[newScene], speed);
+    logAnilist.info("now setting scene %s with speed %.2f ", eSceneNames[newScene], speed);
 
     // For each scene in the eNum scene, we set the servos to their positions
     switch (newScene) {
 
         case sceneEyesAheadOpen:
-            timeForSceneChange = head.eyeballs.lookCenter(speed) ;
-            timeForSceneChange = head.eyesOpen(50, speed);
+            timeForSceneChange = puppet.eyeballs.lookCenter(speed) ;
+            timeForSceneChange = puppet.eyesOpen(50, speed);
             break;
 
         case sceneEyesAhead: 
-            timeForSceneChange = head.eyeballs.lookCenter(speed) ;
-            break;
-
-        case sceneEyesOpenWide:
-            timeForSceneChange = head.eyesOpen(100,speed); 
+            timeForSceneChange = puppet.eyeballs.lookCenter(speed) ;
             break;
 
         case sceneEyesOpen:
-            timeForSceneChange = head.eyesOpen(50,speed); 
-            break;
-
-        case sceneEyesClosed:
-            timeForSceneChange = head.eyesOpen(0,speed);    
+            // modifier is how far open. 0:closed 100:open wide
+            timeForSceneChange = puppet.eyesOpen(modifier,speed); 
             break;
 
         case sceneEyesRight:
-            timeForSceneChange = head.eyeballs.positionX(100,speed); 
+            timeForSceneChange = puppet.eyeballs.positionX(100,speed); 
             break;
         
         case sceneEyesLeft:
-            timeForSceneChange = head.eyeballs.positionX(0,speed); 
+            timeForSceneChange = puppet.eyeballs.positionX(0,speed); 
             break;
 
         case sceneEyesUp:
-            timeForSceneChange = head.eyeballs.positionY(100,speed);
+            timeForSceneChange = puppet.eyeballs.positionY(100,speed);
             break;
 
         case sceneEyesDown:
-            timeForSceneChange = head.eyeballs.positionY(0,speed);
+            timeForSceneChange = puppet.eyeballs.positionY(0,speed);
             break;
 
         case sceneBlink:
-            timeForSceneChange = head.blink();
+            timeForSceneChange = puppet.blink();
             break;
 
-        case sceneWinkLeft:
-            timeForSceneChange = head.wink(true);
+        case sceneEyelidsLeft:
+            timeForSceneChange = puppet.eyelidLeftUpper.position(modifier, speed);
+            timeForSceneChange = puppet.eyelidLeftLower.position(modifier, speed);
             break;
 
-        case sceneWinkRight:
-            timeForSceneChange = head.wink(false);
+        case sceneEyelidsRight:
+            timeForSceneChange = puppet.eyelidRightUpper.position(modifier, speed);
+            timeForSceneChange = puppet.eyelidRightLower.position(modifier, speed);
             break;
 
         default:

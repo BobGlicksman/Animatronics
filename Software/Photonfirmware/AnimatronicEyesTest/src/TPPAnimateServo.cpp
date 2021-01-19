@@ -29,7 +29,7 @@
 
 Logger logAniservo("app.aniservo");
 
-static Adafruit_PWMServoDriver pwm_; // = Adafruit_PWMServoDriver();
+static Adafruit_PWMServoDriver pwm_; 
 
 /* ----- TPP_AnimateServo -----
  *  class initializer. called each time the class is instantiated
@@ -83,7 +83,7 @@ void TPP_AnimateServo::begin(int servoNumIn, int positionIn) {
  *  Returns the estimated milliseconds needed to get from the current position 
  *     to the new position.
  */
-int TPP_AnimateServo::moveTo (int newPos, int speed) {
+int TPP_AnimateServo::moveTo (int newPos, float speed) {
 
     int estimatedMSToFinish = 0;
 
