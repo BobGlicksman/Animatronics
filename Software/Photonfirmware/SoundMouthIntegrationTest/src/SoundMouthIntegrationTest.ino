@@ -32,12 +32,14 @@
  *      processign circuitry.
  * 
  * Author: Bob Glicksman (Jim Schrempp, Team Practical Projects)
- * Version: 1.1
- * Date:  1/16/21
+ * Version: 1.2
+ * Date:  1/21/21
  * (c) 2021, Bob Glicksman, Jim Schrempp, Team Practical Projects
  *  all rights reservd.
  * License: open source, non-commercial
  * History:
+ * version 1.2: added non-linear scaling of the A/D data (using sqrt function
+ *  to enhance low level sounds, more or less like human hearing).
  * version 1.1: added constrain() to prevent the servo from pegging; Toggle
  *  the D7 LED every time that the servo is written to so that the actual
  *  servo update rate can be tested using a scope.
@@ -46,6 +48,7 @@
  ***************************************************************************************/
 
 #include <DFRobotDFPlayerMini.h>
+#include <math.h>
 
 // create an instance of the mini MP3 player
 DFRobotDFPlayerMini miniMP3Player;
@@ -123,6 +126,8 @@ void loop() {
     numberAveragedPoints++; // keep track of how many points are added
     if(numberAveragedPoints >= numSamples) {  // number samples to average reached
       averagedData = averagedData / numSamples; // average the sum
+      // non-linearly scale the averaged data
+      averagedData = nlScale(averagedData);
       // command the servo
       servoCommand = map(averagedData, minValue, maxValue, MOUTH_CLOSED, MOUTH_OPENED);
       // constrain the servo so it doesn't peg at 0 or 180 degrees.
@@ -218,4 +223,13 @@ int analogMin(String theMin) {
   }
   return minValue;
 } // end of analogMax()
+
+// function to non-linearly scale the averaged data values
+//  to better represent mouth movements
+unsigned int nlScale(unsigned int dataToScale) {
+  float data = (float)dataToScale;
+  float max = (float)maxValue;
+  double scaled = sqrt(data/max);
+  return (unsigned int)(scaled * dataToScale);
+} // end of nlScale
 
