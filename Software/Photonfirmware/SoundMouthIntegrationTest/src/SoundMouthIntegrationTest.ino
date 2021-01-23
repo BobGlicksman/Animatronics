@@ -32,12 +32,15 @@
  *      processign circuitry.
  * 
  * Author: Bob Glicksman (Jim Schrempp, Team Practical Projects)
- * Version: 1.2
- * Date:  1/21/21
+ * Version: 1.3
+ * Date:  1/23/21
  * (c) 2021, Bob Glicksman, Jim Schrempp, Team Practical Projects
  *  all rights reservd.
  * License: open source, non-commercial
  * History:
+ * version 1.3: added cloud function to select the non-linear processing to
+ *  use for scaling enbvelope data for servo command purposes. Also changed
+ *  mouth wide open position to 105 deg from 90 deg for more realism.
  * version 1.2: added non-linear scaling of the A/D data (using sqrt function
  *  to enhance low level sounds, more or less like human hearing).
  * version 1.1: added constrain() to prevent the servo from pegging; Toggle
@@ -65,12 +68,13 @@ const int ANALOG_ENV_INPUT = A2;
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
 const int MOUTH_CLOSED = 180;  // servo position for the mouth closed
-const int MOUTH_OPENED = 90;  // servo position for the wide open mouth
+const int MOUTH_OPENED = 105;  // servo position for the wide open mouth
 
-// define global variables for the mini MP3 Player
+// define global variables for the audio envelope data
 int maxValue = 4095; // the highest expected analog input value - for servo mapping
 int minValue = 0; // the lowest expected analog input value - for servo mapping
 int numSamples = 5; // the number of analog input samples to average for a servo command
+int nlProcess = 0;  // 0 for skip nn linear processing, 1 for sqrt processing, more later...
 
 // cloud variables to report statistics
 int maxFound = 0; // the maximum analog value found in the data set
@@ -87,6 +91,7 @@ void setup() {
   Particle.function("clip number", clipNum);
   Particle.function("volume", clipVolume);
   Particle.function("number of samples", samples);
+  Particle.function("non-linear processing type", nlp);
   Particle.function("analog input max", analogMax);
   Particle.function("analog input min", analogMin);
   Particle.variable("max envelope value", maxFound);
@@ -127,7 +132,9 @@ void loop() {
     if(numberAveragedPoints >= numSamples) {  // number samples to average reached
       averagedData = averagedData / numSamples; // average the sum
       // non-linearly scale the averaged data
-      averagedData = nlScale(averagedData);
+      if(nlProcess == 1) {
+        averagedData = nlScale(averagedData);
+      }
       // command the servo
       servoCommand = map(averagedData, minValue, maxValue, MOUTH_CLOSED, MOUTH_OPENED);
       // constrain the servo so it doesn't peg at 0 or 180 degrees.
@@ -232,4 +239,12 @@ unsigned int nlScale(unsigned int dataToScale) {
   double scaled = sqrt(data/max);
   return (unsigned int)(scaled * dataToScale);
 } // end of nlScale
+
+//  cloud function to select the type of non-linear processing of envelope
+//    data. 0 = no non-linear processing; 1 = sqrt processing, more
+//    types to be added later
+int nlp(String processType) {
+  nlProcess = processType.toInt();
+  return nlProcess;
+} // end of nlp()
 
