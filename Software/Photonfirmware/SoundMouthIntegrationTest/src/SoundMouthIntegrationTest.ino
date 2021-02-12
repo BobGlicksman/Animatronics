@@ -32,12 +32,14 @@
  *      processign circuitry.
  * 
  * Author: Bob Glicksman (Jim Schrempp, Team Practical Projects)
- * Version: 1.3
- * Date:  1/23/21
+ * Version: 1.4
+ * Date:  2/09/21
  * (c) 2021, Bob Glicksman, Jim Schrempp, Team Practical Projects
  *  all rights reservd.
  * License: open source, non-commercial
  * History:
+ * version 1.4: changed MOUTH_OPENED and MOUTH_CLOSED defined constants for Jim's
+ *  3D printed "mock mouth".
  * version 1.3: added cloud function to select the non-linear processing to
  *  use for scaling enbvelope data for servo command purposes. Also changed
  *  mouth wide open position to 105 deg from 90 deg for more realism.
@@ -67,14 +69,14 @@ const int ANALOG_ENV_INPUT = A2;
 
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
-const int MOUTH_CLOSED = 180;  // servo position for the mouth closed
-const int MOUTH_OPENED = 105;  // servo position for the wide open mouth
+const int MOUTH_CLOSED = 100;  // servo position for the mouth closed
+const int MOUTH_OPENED = 140;  // servo position for the wide open mouth
 
 // define global variables for the audio envelope data
 int maxValue = 4095; // the highest expected analog input value - for servo mapping
 int minValue = 0; // the lowest expected analog input value - for servo mapping
 int numSamples = 5; // the number of analog input samples to average for a servo command
-int nlProcess = 0;  // 0 for skip nn linear processing, 1 for sqrt processing, more later...
+int nlProcess = 0;  // 0 for skip non linear processing, 1 for sqrt processing, more later...
 
 // cloud variables to report statistics
 int maxFound = 0; // the maximum analog value found in the data set
