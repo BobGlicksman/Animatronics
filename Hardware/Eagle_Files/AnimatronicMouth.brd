@@ -260,31 +260,6 @@
 <text x="12.7" y="8.255" size="0.8128" layer="21">R</text>
 <text x="12.7" y="10.795" size="0.8128" layer="21">L</text>
 <text x="12.7" y="13.335" size="0.8128" layer="21">G</text>
-<text x="64.77" y="46.355" size="2.54" layer="22" rot="MR0">ANIMATRONICS PROJECT</text>
-<text x="62.865" y="41.91" size="2.54" layer="22" rot="MR0">MOUTH DRIVER BOARD</text>
-<text x="65.405" y="38.1" size="1.778" layer="22" rot="MR0">(c) 2021, TEAM PRACTICAL PROJECTS</text>
-<text x="53.975" y="34.925" size="1.778" layer="22" rot="MR0">All Rights Reserved</text>
-<text x="21.59" y="42.545" size="1.778" layer="21">10K</text>
-<text x="21.59" y="36.195" size="1.778" layer="21">10K</text>
-<text x="25.4" y="29.845" size="1.778" layer="21">22K</text>
-<text x="8.89" y="36.83" size="1.778" layer="21">100u</text>
-<text x="24.765" y="18.415" size="1.778" layer="21" rot="R90">22K</text>
-<text x="31.115" y="18.415" size="1.778" layer="21" rot="R180">22K</text>
-<text x="31.115" y="18.415" size="1.778" layer="21" rot="R90">47K</text>
-<text x="47.625" y="36.195" size="1.778" layer="21">47K</text>
-<text x="52.07" y="31.115" size="1.778" layer="21">47K</text>
-<text x="46.355" y="3.175" size="1.778" layer="21">10K</text>
-<text x="66.675" y="32.385" size="1.778" layer="21">4.7K</text>
-<text x="69.215" y="17.145" size="1.778" layer="21" rot="R90">10K</text>
-<text x="72.39" y="73.025" size="1.778" layer="21">470</text>
-<text x="74.93" y="61.595" size="1.778" layer="21" rot="R90">470</text>
-<text x="64.135" y="40.64" size="1.778" layer="21" rot="R90">4.7K</text>
-<text x="69.215" y="40.64" size="1.778" layer="21" rot="R90">4.7K</text>
-<text x="74.295" y="40.64" size="1.778" layer="21" rot="R90">4.7K</text>
-<text x="44.45" y="22.225" size="1.778" layer="21">OPA4342</text>
-<text x="65.405" y="54.61" size="1.778" layer="21" rot="R90">74AHCT125</text>
-<text x="3.81" y="25.4" size="1.27" layer="21" rot="R90">USB PWR</text>
-<text x="6.985" y="9.525" size="1.016" layer="21" rot="R90">AUDIO OUT</text>
 </plain>
 <libraries>
 <library name="adafruit" urn="urn:adsk.eagle:library:420">
