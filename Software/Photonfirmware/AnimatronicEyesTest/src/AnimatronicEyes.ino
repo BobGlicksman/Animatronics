@@ -16,7 +16,7 @@
 
 const String version = "1.0";
  
-SYSTEM_MODE(MANUAL);
+//SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
 
 #include <Wire.h>

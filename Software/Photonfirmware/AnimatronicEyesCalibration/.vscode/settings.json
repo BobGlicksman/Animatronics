@@ -5,5 +5,7 @@
     "files.associations": {
         "*.ino": "cpp"
     },
-    "particle.targetDevice": "Animatronic_Eyes"
+    "particle.targetDevice": "Animatronic_Eyes",
+    "particle.firmwareVersion": "3.0.0-rc.1",
+    "particle.targetPlatform": "photon"
 }
