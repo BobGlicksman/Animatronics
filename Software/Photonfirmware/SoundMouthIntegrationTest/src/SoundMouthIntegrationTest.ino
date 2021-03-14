@@ -3,18 +3,22 @@
  * Description:  This test program allows a clip to be selected on the DR Robot
  *  mini MP3 Player.  The selected clip is played through the analog processing
  *  circuitry and the resulting envelope is sampled by the Photon's A/D converter
- *  (pin A2).  The sampled envelope data is averaged and the averaged samples
+ *  (pin A0).  The sampled envelope data is averaged and the averaged samples
  *  are then mapped to servo controls for a "mouth" movement servo.
  * 
  *  The selected analog sampling rate is 100 Hz (one sample every 10 ms).  A 
  *  global variable is used to determine the number of samples to average and
- *  therefore the rate at which servo commands are issued.  Based upon earier testing,
- *  the nominal number of averaged samples is 5; however the intent is to 
- *  experiment in order to find an optimal value.
+ *  therefore the rate at which servo commands are issued.  
+ * 
+ *  Provision has been made to process averaged A/D samples with a non-linear
+ *  function.  Human hearing processes sound energy logarithmically.  This version
+ *  uses a square root function for non-linear processing (because it is available).
  * 
  *  Particle cloud functions are defined to:
  *  - select and play a clip on the mini MP3 player
  *  - define the playback volume for the mini MP3 player
+ *  - select the number of A/D samples to average
+ *  - select a non-linear processing function (or not)
  *  - select the max A/D value to map to the max servo mouth open value
  *  - select the min A/D value to map to the min servo mouth closed value
  * 
@@ -28,16 +32,23 @@
  *  - Photon Rx to mini MP3 Tx
  *  - Photon D2 is a digital input and connected to mini MP3 BUSY pin
  *  - Photon D3 is an output and is the servo control (through a 3.3 - 5v converter)
- *  - Photon A2 is an analog input fromt he envelope output of the analog
- *      processign circuitry.
+ *  - Photon A0 is an analog input from the envelope output of the analog
+ *      processing circuitry.
+ *  - Photon A1 is an analog input from the analog preamlifier. Photon A2 is
+ *      an analog input from the DC offset (necessary because a single eneded
+ *      supply us used for the op-amps).  These analog inputs might be useful
+ *      for some offline storage and processing in some future application
+ *      (e.g. an FFT).
  * 
  * Author: Bob Glicksman (Jim Schrempp, Team Practical Projects)
  * Version: 1.4
- * Date:  2/09/21
+ * Date:  3/14/21
  * (c) 2021, Bob Glicksman, Jim Schrempp, Team Practical Projects
  *  all rights reservd.
  * License: open source, non-commercial
  * History:
+ * version 1.5: changed MOUTH_OPENED and MOUTH_CLOSED defined constants for the
+ *  latest 3D printed mouth tested at MN on 3/12/21.
  * version 1.4: changed MOUTH_OPENED and MOUTH_CLOSED defined constants for Jim's
  *  3D printed "mock mouth".
  * version 1.3: added cloud function to select the non-linear processing to
