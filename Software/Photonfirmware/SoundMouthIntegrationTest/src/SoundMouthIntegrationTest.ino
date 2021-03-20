@@ -81,7 +81,7 @@ const int ANALOG_ENV_INPUT = A0;
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
 const int MOUTH_CLOSED = 90;  // servo position for the mouth closed
-const int MOUTH_OPENED = 105;  // servo position for the wide open mouth
+const int MOUTH_OPENED = 105; // servo position for the wide open mouth
 
 // define global variables for the audio envelope data
 int maxValue = 4095; // the highest expected analog input value - for servo mapping
