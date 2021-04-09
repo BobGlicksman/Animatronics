@@ -3,18 +3,22 @@
  * Description:  This test program allows a clip to be selected on the DR Robot
  *  mini MP3 Player.  The selected clip is played through the analog processing
  *  circuitry and the resulting envelope is sampled by the Photon's A/D converter
- *  (pin A2).  The sampled envelope data is averaged and the averaged samples
+ *  (pin A0).  The sampled envelope data is averaged and the averaged samples
  *  are then mapped to servo controls for a "mouth" movement servo.
  * 
  *  The selected analog sampling rate is 100 Hz (one sample every 10 ms).  A 
  *  global variable is used to determine the number of samples to average and
- *  therefore the rate at which servo commands are issued.  Based upon earier testing,
- *  the nominal number of averaged samples is 5; however the intent is to 
- *  experiment in order to find an optimal value.
+ *  therefore the rate at which servo commands are issued.  
+ * 
+ *  Provision has been made to process averaged A/D samples with a non-linear
+ *  function.  Human hearing processes sound energy logarithmically.  This version
+ *  uses a square root function for non-linear processing (because it is available).
  * 
  *  Particle cloud functions are defined to:
  *  - select and play a clip on the mini MP3 player
  *  - define the playback volume for the mini MP3 player
+ *  - select the number of A/D samples to average
+ *  - select a non-linear processing function (or not)
  *  - select the max A/D value to map to the max servo mouth open value
  *  - select the min A/D value to map to the min servo mouth closed value
  * 
@@ -28,16 +32,30 @@
  *  - Photon Rx to mini MP3 Tx
  *  - Photon D2 is a digital input and connected to mini MP3 BUSY pin
  *  - Photon D3 is an output and is the servo control (through a 3.3 - 5v converter)
- *  - Photon A2 is an analog input fromt he envelope output of the analog
- *      processign circuitry.
+ *  - Photon A0 is an analog input from the envelope output of the analog
+ *      processing circuitry.
+ *  - Photon A1 is an analog input from the analog preamlifier. Photon A2 is
+ *      an analog input from the DC offset (necessary because a single eneded
+ *      supply us used for the op-amps).  These analog inputs might be useful
+ *      for some offline storage and processing in some future application
+ *      (e.g. an FFT).
  * 
  * Author: Bob Glicksman (Jim Schrempp, Team Practical Projects)
- * Version: 1.1
- * Date:  1/16/21
+ * Version: 1.4
+ * Date:  3/14/21
  * (c) 2021, Bob Glicksman, Jim Schrempp, Team Practical Projects
  *  all rights reservd.
  * License: open source, non-commercial
  * History:
+ * version 1.5: changed MOUTH_OPENED and MOUTH_CLOSED defined constants for the
+ *  latest 3D printed mouth tested at MN on 3/12/21.
+ * version 1.4: changed MOUTH_OPENED and MOUTH_CLOSED defined constants for Jim's
+ *  3D printed "mock mouth".
+ * version 1.3: added cloud function to select the non-linear processing to
+ *  use for scaling enbvelope data for servo command purposes. Also changed
+ *  mouth wide open position to 105 deg from 90 deg for more realism.
+ * version 1.2: added non-linear scaling of the A/D data (using sqrt function
+ *  to enhance low level sounds, more or less like human hearing).
  * version 1.1: added constrain() to prevent the servo from pegging; Toggle
  *  the D7 LED every time that the servo is written to so that the actual
  *  servo update rate can be tested using a scope.
@@ -46,6 +64,7 @@
  ***************************************************************************************/
 
 #include <DFRobotDFPlayerMini.h>
+#include <math.h>
 
 // create an instance of the mini MP3 player
 DFRobotDFPlayerMini miniMP3Player;
@@ -57,17 +76,18 @@ Servo mouthServo;
 const int BUSY_PIN = D2;
 const int SERVO_PIN = D3;
 const int LED_PIN = D7;
-const int ANALOG_ENV_INPUT = A2;
+const int ANALOG_ENV_INPUT = A0;
 
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
-const int MOUTH_CLOSED = 180;  // servo position for the mouth closed
-const int MOUTH_OPENED = 90;  // servo position for the wide open mouth
+const int MOUTH_CLOSED = 90;  // servo position for the mouth closed
+const int MOUTH_OPENED = 105; // servo position for the wide open mouth
 
-// define global variables for the mini MP3 Player
+// define global variables for the audio envelope data
 int maxValue = 4095; // the highest expected analog input value - for servo mapping
 int minValue = 0; // the lowest expected analog input value - for servo mapping
 int numSamples = 5; // the number of analog input samples to average for a servo command
+int nlProcess = 0;  // 0 for skip non linear processing, 1 for sqrt processing, more later...
 
 // cloud variables to report statistics
 int maxFound = 0; // the maximum analog value found in the data set
@@ -84,6 +104,7 @@ void setup() {
   Particle.function("clip number", clipNum);
   Particle.function("volume", clipVolume);
   Particle.function("number of samples", samples);
+  Particle.function("non-linear processing type", nlp);
   Particle.function("analog input max", analogMax);
   Particle.function("analog input min", analogMin);
   Particle.variable("max envelope value", maxFound);
@@ -123,6 +144,10 @@ void loop() {
     numberAveragedPoints++; // keep track of how many points are added
     if(numberAveragedPoints >= numSamples) {  // number samples to average reached
       averagedData = averagedData / numSamples; // average the sum
+      // non-linearly scale the averaged data
+      if(nlProcess == 1) {
+        averagedData = nlScale(averagedData);
+      }
       // command the servo
       servoCommand = map(averagedData, minValue, maxValue, MOUTH_CLOSED, MOUTH_OPENED);
       // constrain the servo so it doesn't peg at 0 or 180 degrees.
@@ -218,4 +243,21 @@ int analogMin(String theMin) {
   }
   return minValue;
 } // end of analogMax()
+
+// function to non-linearly scale the averaged data values
+//  to better represent mouth movements
+unsigned int nlScale(unsigned int dataToScale) {
+  float data = (float)dataToScale;
+  float max = (float)maxValue;
+  double scaled = sqrt(data/max);
+  return (unsigned int)(scaled * dataToScale);
+} // end of nlScale
+
+//  cloud function to select the type of non-linear processing of envelope
+//    data. 0 = no non-linear processing; 1 = sqrt processing, more
+//    types to be added later
+int nlp(String processType) {
+  nlProcess = processType.toInt();
+  return nlProcess;
+} // end of nlp()
 
