@@ -49,16 +49,14 @@
 Logger logAnilist("app.anilist");
 
 // The order of these must correspond to the order in the eScene enumeration
-const char* eSceneNames[10] {
+const char* eSceneNames[8] {
     "sceneEyesAheadOpen",
     "sceneEyesAhead",
     "sceneEyesRight",
-    "sceneEyesLeft",
-    "sceneEyesUp",
-    "sceneEyesDown",
+    "sceneEyesUpDown",
     "sceneEyesOpen",
     "sceneEyelidsLeft",
-    "sceneEyelidsRight",
+    "sceneEyelidsRight"
     "sceneBlink"
 };
 
@@ -110,7 +108,7 @@ void animationList::startRunning(){
 /* ----- isRunning -----
  * returns true if an animation run is in progress
  */
-int animationList::isRunning(){
+bool animationList::isRunning(){
     return isRunning_;
 }
 
@@ -132,6 +130,7 @@ void animationList::stopRunning(){
 void animationList::clearSceneList(){
     isRunning_ = false;
     currentSceneIndex_ = -1;
+    lastSceneIndex_ = -1;
 }
 
 /* --------- process()
@@ -193,7 +192,7 @@ void animationList::process() {
 // setScene
 // Positions the objects to their positions for the scene
 // Returns the estimated time to reach the scene
-int animationList::setScene(eScene newScene, int modifier, float speed){ //, TPP_puppet *thepuppet){ XXX
+int animationList::setScene(eScene newScene, int modifier, float speed) { //, TPP_puppet *thepuppet){ XXX
 
     int timeForSceneChange = 0;
 
@@ -216,20 +215,12 @@ int animationList::setScene(eScene newScene, int modifier, float speed){ //, TPP
             timeForSceneChange = puppet.eyesOpen(modifier,speed); 
             break;
 
-        case sceneEyesRight:
-            timeForSceneChange = puppet.eyeballs.positionX(100,speed); 
-            break;
-        
-        case sceneEyesLeft:
-            timeForSceneChange = puppet.eyeballs.positionX(0,speed); 
+        case sceneEyesLeftRight:
+            timeForSceneChange = puppet.eyeballs.positionX(modifier,speed); 
             break;
 
-        case sceneEyesUp:
-            timeForSceneChange = puppet.eyeballs.positionY(100,speed);
-            break;
-
-        case sceneEyesDown:
-            timeForSceneChange = puppet.eyeballs.positionY(0,speed);
+        case sceneEyesUpDown:
+            timeForSceneChange = puppet.eyeballs.positionY(modifier,speed);
             break;
 
         case sceneBlink:

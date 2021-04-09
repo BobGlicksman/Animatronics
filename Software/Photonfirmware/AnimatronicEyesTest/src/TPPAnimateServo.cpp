@@ -59,7 +59,7 @@ void TPP_AnimateServo::initPWM(){
  * servoNum: based on the AdaFruit servo driver board
  * position: where to set the servo on initialization
  */
-void TPP_AnimateServo::begin(int servoNumIn, int positionIn) {
+void TPP_AnimateServo::begin(int servoNumIn, int positionIn) volatile {
 
     // store values in class variables
     servoNum_ = servoNumIn;
@@ -83,7 +83,7 @@ void TPP_AnimateServo::begin(int servoNumIn, int positionIn) {
  *  Returns the estimated milliseconds needed to get from the current position 
  *     to the new position.
  */
-int TPP_AnimateServo::moveTo (int newPos, float speed) {
+int TPP_AnimateServo::moveTo (int newPos, float speed)  volatile{
 
     int estimatedMSToFinish = 0;
 
@@ -121,7 +121,7 @@ int TPP_AnimateServo::moveTo (int newPos, float speed) {
  * Called often to give the animation a chance to step forward
  * Will position the servos every MS_BETWEEN_MOVES 
  */
-void TPP_AnimateServo::process() {
+void TPP_AnimateServo::process() volatile {
 
     bool atDestination = false;
 

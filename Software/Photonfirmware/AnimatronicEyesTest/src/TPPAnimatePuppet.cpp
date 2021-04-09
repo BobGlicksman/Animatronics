@@ -49,7 +49,7 @@ Logger logPuppet("app.puppet");
  * called often to give the animation a chance to step forward
  * This will call process() on all objects it owns.
 */
-void TPP_Puppet::process() {
+void TPP_Puppet::process()  {
     
     eyeballs.process();
     eyelidLeftUpper.process();

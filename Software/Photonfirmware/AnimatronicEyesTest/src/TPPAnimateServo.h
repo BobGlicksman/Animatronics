@@ -39,34 +39,26 @@ class TPP_AnimateServo{
 
     public:
         TPP_AnimateServo();
-        void begin(int servoNum, int postion);
-        void process(); // called every time in the loop to keep the eyes moving
-        int moveTo (int newX, float speed);
+        void begin(int servoNum, int postion) volatile;
+        void process() volatile; // called every time in the loop to keep the eyes moving
+        int moveTo (int newX, float speed) volatile;
 
     private:
         
-        static void initPWM();      // called once in the class inititator to init pwm library
-        int servoNum_ = 0;          // Number of this servo on the driver board 
-        float position_ = -1;       // the current position of the servo
-        int destination_ = 0;       // the position we are heading towards
-        float increment_ = 1;       // increment we are using to get from position to destination
-        int lastMoveMade_ = 0;      // time the last time we moved the servo position
+        void initPWM();      // called once in the class inititator to init pwm library
+        volatile int servoNum_ = 0;          // Number of this servo on the driver board 
+        volatile float position_ = -1;       // the current position of the servo
+        volatile int destination_ = 0;       // the position we are heading towards
+        volatile float increment_ = 1;       // increment we are using to get from position to destination
+        volatile int lastMoveMade_ = 0;      // time the last time we moved the servo position
         
         // used for debugging
-        int timeStart_ = 0;         // time we started moving. Used for debug
-        int startPosition_ = 0;     // position at the start of the move. Used for debug
-        bool lastDebugNeedsPrinting_ = true;// in debugging used to print a message when destination is reached
+        volatile int timeStart_ = 0;         // time we started moving. Used for debug
+        volatile int startPosition_ = 0;     // position at the start of the move. Used for debug
+        volatile bool lastDebugNeedsPrinting_ = true;// in debugging used to print a message when destination is reached
                                             // set to true when a new destination is set 
 
 
 };
-
-
-
-
-
-
-
-
 
 #endif 
