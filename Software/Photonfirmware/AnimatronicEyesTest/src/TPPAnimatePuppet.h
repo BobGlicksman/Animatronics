@@ -70,8 +70,8 @@ class TPP_Eyeball {
         int ymidPos;
         int upOffset;
         int downOffset;
-        TPP_AnimateServo xServo;
-        TPP_AnimateServo yServo;
+        volatile TPP_AnimateServo xServo;
+        volatile TPP_AnimateServo yServo;
 
 };
 

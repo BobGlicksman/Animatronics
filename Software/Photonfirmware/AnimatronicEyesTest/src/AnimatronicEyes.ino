@@ -9,6 +9,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2020 Bob Glicksman and Jim Schrempp
  * 
+ * v1.1 Now with idle eye movements and a wake up sequence
  * v1.0 First checkin with everything working to do a small 8 step animation
  *    
  */ 
@@ -104,7 +105,7 @@ int midValue(int value1, int value2) {
 void animationTimerCallback() {
 
     // now have animation pass this on to all the servos it manages
-    static bool inCall = false;
+    volatile static bool inCall = false;
     if (!inCall) {
         inCall = true;
         animation1.process();
@@ -158,6 +159,13 @@ void loop() {
 
     }
 
+    // if there is no animation running, then let the eyes roam
+    if (!animation1.isRunning()) {
+        animation1.clearSceneList();
+        sequenceEyesRoam();
+        animation1.startRunning();
+    }
+
     animationTimerCallback();
 
 }
@@ -171,27 +179,29 @@ void sequenceGeneralTests () {
       
     animation1.addScene(sceneEyesAheadOpen, -1, MOVE_SPEED_SLOW, 0);
 
-    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesLeft, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesLeft, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesLeftRight, 0, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesLeftRight, 100, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesLeftRight, 0, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesLeftRight, 100, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesLeftRight, 0, MOVE_SPEED_SLOW, 0);
 
-    animation1.addScene(sceneEyesLeft, -1, MOVE_SPEED_FAST, 0);
-    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_FAST, 0);
-    animation1.addScene(sceneEyesLeft, -1, MOVE_SPEED_FAST, 0);
-    animation1.addScene(sceneEyesRight, -1, MOVE_SPEED_FAST, 0);
+    animation1.addScene(sceneEyesLeftRight, 100, MOVE_SPEED_FAST, 0);
+    animation1.addScene(sceneEyesLeftRight, 0, MOVE_SPEED_FAST, 0);
+    animation1.addScene(sceneEyesLeftRight, 100, MOVE_SPEED_FAST, 0);
+    animation1.addScene(sceneEyesLeftRight, 0, MOVE_SPEED_FAST, 0);
 
     animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, 0);
 
-    animation1.addScene(sceneEyesUp, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesDown, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesUp, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesDown, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesUp, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesDown, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesUp, -1, MOVE_SPEED_SLOW, 0);
-    animation1.addScene(sceneEyesDown, -1, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUpDown, EYES_UP, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUpDown, EYES_DOWN, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUpDown, EYES_UP, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUpDown, EYES_DOWN, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUpDown, EYES_UP, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUpDown, EYES_DOWN, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUpDown, EYES_UP, MOVE_SPEED_SLOW, 0);
+    animation1.addScene(sceneEyesUpDown, EYES_DOWN, MOVE_SPEED_SLOW, 0);
+
+
 
     animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, 0);
 
@@ -238,7 +248,7 @@ void sequenceGeneralTests () {
 
 void sequenceLookReal() {
 
-    sequenceWakeUpSlowly(5000);
+    sequenceWakeUpSlowly(0);
 
 }
 
@@ -260,15 +270,46 @@ void sequenceAsleep(int delayAfterMS) {
 
 void sequenceEyesWake(int delayAfterMS){
 
+    animation1.addScene(sceneEyelidsLeft, eyelidSlit, .1, -1);
+    animation1.addScene(sceneEyesLeftRight, 0, .2, 1000);
+    animation1.addScene(sceneEyesLeftRight, 100, .2, 2000);
+    animation1.addScene(sceneEyesLeftRight, 50, .5, -1);
+    animation1.addScene(sceneEyelidsLeft, eyelidClosed, .2, 1000);
+    animation1.addScene(sceneEyesLeftRight, 75, .2, -1);
     animation1.addScene(sceneEyesOpen, eyelidSlit, .1, -1);
-    animation1.addScene(sceneEyesRight, -1, .1, 1000);
-    animation1.addScene(sceneEyesLeft, -1, .1, 2000);
-    animation1.addScene(sceneEyesAhead, -1, .5, -1);
-    animation1.addScene(sceneEyesOpen, eyelidClosed, .1,1000);
-    animation1.addScene(sceneEyesOpen, eyelidSlit, .1, 1000);
-    animation1.addScene(sceneEyesOpen, eyelidClosed, .1,1000);
-    animation1.addScene(sceneEyesOpen, eyelidNormal, MOVE_SPEED_SLOW, 1000);
+    animation1.addScene(sceneEyesLeftRight, 35, .2, 2000);
+    animation1.addScene(sceneEyesOpen, eyelidClosed, .1,2000);
+    animation1.addScene(sceneEyesLeftRight, 50, .4, -1);
+    animation1.addScene(sceneEyesOpen, eyelidNormal, .5, 0);
     sequenceBlinkEyes(delayAfterMS);
+
+}
+
+void sequenceEyesRoam() {
+
+    static int posLeftRight = 50;
+    static int posUpDown = 50;
+
+    randomSeed(micros());
+
+    for (int i=0; i<30; i++){
+
+        // pick left/right and up/down
+        //posLeftRight = posLeftRight + random(2,20) - 9;
+        //posUpDown = posUpDown + random(2,20) - 9;
+        posLeftRight = random(25,75);
+        posUpDown = random(25,75);
+
+        float speed = random(1,20) / 10.0;
+        int delay = random(500,1000);
+
+        if(random(0,100) > 80){
+            sequenceBlinkEyes(-1);
+        }
+        animation1.addScene(sceneEyesLeftRight, posLeftRight, speed, -1);
+        animation1.addScene(sceneEyesUpDown, posUpDown, speed, delay);
+        
+    }
 
 }
 

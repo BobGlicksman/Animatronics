@@ -55,16 +55,18 @@
 enum eScene {
     sceneEyesAheadOpen,
     sceneEyesAhead,
-    sceneEyesRight,
-    sceneEyesLeft,
-    sceneEyesUp,
-    sceneEyesDown,
+    sceneEyesLeftRight,
+    sceneEyesUpDown,
     sceneEyesOpen,
     sceneEyelidsLeft,
     sceneEyelidsRight,
     sceneBlink
 };
 
+#define EYES_LEFT 0
+#define EYES_RIGHT 100
+#define EYES_UP 0
+#define EYES_DOWN 100
 
 
 class animationList {
@@ -72,7 +74,7 @@ class animationList {
         int addScene(eScene scene, int modifier, float speed, int delayAfterMoveMS);
         void process();
         void startRunning();
-        int isRunning();
+        bool isRunning();
         void stopRunning();
         void clearSceneList();
         TPP_Puppet puppet;
