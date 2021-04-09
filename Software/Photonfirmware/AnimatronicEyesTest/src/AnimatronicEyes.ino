@@ -56,22 +56,22 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 // -------------------------------------------------------------------
 // -------------------------------------------------------------------
 
-    #define X_POS_MID 413
-    #define X_POS_LEFT_OFFSET 119
-    #define X_POS_RIGHT_OFFSET -137
+    #define X_POS_MID 479
+    #define X_POS_LEFT_OFFSET 115
+    #define X_POS_RIGHT_OFFSET -128
 
-    #define Y_POS_MID 390
-    #define Y_POS_UP_OFFSET 53
-    #define Y_POS_DOWN_OFFSET -63
+    #define Y_POS_MID 343
+    #define Y_POS_UP_OFFSET 93
+    #define Y_POS_DOWN_OFFSET -72
 
-    #define LEFT_UPPER_CLOSED 508
-    #define LEFT_UPPER_OPEN 301
+    #define LEFT_UPPER_CLOSED 473
+    #define LEFT_UPPER_OPEN 260
 
-    #define LEFT_LOWER_CLOSED 269
-    #define LEFT_LOWER_OPEN 473
+    #define LEFT_LOWER_CLOSED 317
+    #define LEFT_LOWER_OPEN 498
 
-    #define RIGHT_UPPER_OFFSET 781
-    #define RIGHT_LOWER_OFFSET 892
+    #define RIGHT_UPPER_OFFSET 760
+    #define RIGHT_LOWER_OFFSET 700
 // -------------------------------------------------------------------
 // -------------------------------------------------------------------
 
