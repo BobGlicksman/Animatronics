@@ -1,3 +1,9 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
+
+#include "Particle.h"
+#line 1 "c:/Users/bobg5/Documents/GitHub/AnimatronicsMouth/Software/Photonfirmware/MN_Demo_Mouth/src/MN_Demo_Mouth.ino"
 /*
  * Project MN_Demo_Mouth
  * Description:
@@ -9,6 +15,17 @@
 #include <math.h>
 
 // create an instance of the mini MP3 player
+void setup();
+void loop();
+void speak();
+int clipNum(String playClip);
+int clipVolume(String volume);
+int samples(String numberSamples);
+int analogMax(String theMax);
+int analogMin(String theMin);
+unsigned int nlScale(unsigned int dataToScale);
+int nlp(String processType);
+#line 12 "c:/Users/bobg5/Documents/GitHub/AnimatronicsMouth/Software/Photonfirmware/MN_Demo_Mouth/src/MN_Demo_Mouth.ino"
 DFRobotDFPlayerMini miniMP3Player;
 
 // create an instance of the servo
