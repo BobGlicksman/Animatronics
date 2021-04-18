@@ -28,6 +28,7 @@ const int PIR_PIN = A4;
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
 const int MOUTH_CLOSED = 90;  // servo position for the mouth closed
 const int MOUTH_OPENED = 105; // servo position for the wide open mouth
+const unsigned long BUSY_WAIT = 2000UL; // busy pin wait time = 2 second
 
 // define global variables for the audio envelope data
 int maxValue = 4095; // the highest expected analog input value - for servo mapping
@@ -108,20 +109,27 @@ void setup() {
 
 void loop() {
   static bool pirFlag = false;
+  static unsigned long busyTime = millis();
   
   speak();
 
-  // check the PIR; if triggered, play clip #11
-  if(digitalRead(PIR_PIN) == HIGH) {
-    if(pirFlag == false) {  // rising edge of PIR flag
-      pirFlag = true;
-      clipPlay(welcome);
+  // wait for the busy line to go high for BUSY_WAIT before triggering playing a clip
+
+  if( (millis() - busyTime) >= BUSY_WAIT) {
+    if(digitalRead(BUSY_PIN) == HIGH) {
+      // check the PIR; if triggered, play welcome clip
+      if(digitalRead(PIR_PIN) == HIGH) {
+        if(pirFlag == false) {  // rising edge of PIR flag
+         pirFlag = true;
+         clipPlay(welcome);
+        }
+      }
+      else {
+        pirFlag = false;
+      }
+      busyTime = millis();
     }
   }
-  else {
-      pirFlag = false;
-  }
-
   // button check - no debounding yet
   if(digitalRead(BUTTON_PIN) == LOW) {  // button is activated
     digitalWrite(RED_LED_PIN, HIGH);
