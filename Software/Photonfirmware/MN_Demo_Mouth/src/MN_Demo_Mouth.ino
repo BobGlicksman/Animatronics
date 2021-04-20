@@ -1,8 +1,48 @@
 /*
  * Project MN_Demo_Mouth
- * Description:
- * Author:
- * Date:
+ * Description: This Photon software supports a demo at Maker Nexus.  It uses the 
+ *  animatronics mouth PC board to play a "welcome" clip and to move the mouth
+ *  servo in accordance with the envelope of the clip.  Other clips are supported
+ *  as well.  A PIR sensor indicated when someone is close to the demo and when the
+ *  PIR sensor is tripped, the eyes part of the demo will be signalled (via Photon A5),
+ *  and the clip will play.  After the clip is complete, the eyes part of the demo is 
+ *  again signalled to end the eye sequence, after a defined delay time. The state machine
+ *  that controls execution of these steps makes sure that the PIR is unasserted before
+ *  the mouth sequence can be retriggered.  This ensures that the sequence is not retirggered until
+ *  people leave the PIR field of view.
+ * 
+ *  The following Photon pins are used:
+ *    D0, D1: these are reserved for I2C and brought out to the I2C PCB connector.  These
+ *      pins are not used for the mouth function at this time.   
+ *    D2: connected on the PCB to the mini MP3 player BUSY line.
+ *    D3: connected to the mouth driving servo
+ *    D4: available as a 5 volt output pin, e.g. for a second servo.  Not used in this demo
+ *    D5: connected to a red LED.  Indicated when the demo is paused.
+ *    D6: connected to a green LED.  Indicates when the eyes are signalled.
+ *    A0, A1, A2: connected internally on the PCB to the analog processing circuirty. Pin
+ *      A2 has the envelope data that is samplled every 10 ms for analog signal processing.
+ *    A3: connected to an external momentary pushbutton switch.  The switch is used to pause
+ *      and unpause the demo.
+ *    A4: connected to a PIR device.  The PIR used runs off of 5 volts and this pin is 5 volt
+ *      tolerant.  The PIR used retirggers if there is constant motion in its field of view.
+ *    A5: signal (3.3 volts/gnd) to the eyes sequence processor.  Asserted (+3.3 volts) when
+ *      the eyes should start a welcome sequence, and unasserts when the eyes can terminate
+ *      the welcome sequence and return to "sleeping".
+ * 
+ *  This software retains the ability to set analog signal processing parameters via
+ *  the Particle console and to report max and min values found when playing a clip
+ *  back to the console.  It is not necessary to use the console to read or set
+ *  any values as defaults are provided that have been determined to be optimal via
+ *  prior experimentation.  However, the ability to change these without having to recompile
+ *  the software is retained.
+ * 
+ * **** this code is still in development.  It needs the pause button implementation.
+ *      
+ * Author: Bob Glicksman (Jim Schrempp, Team Practical Projects)
+ * Date: 4/20/21
+ * 
+ * version: 0.1: code is tested but needs pause button to be implemented.
+ * 
  */
 
 #include <DFRobotDFPlayerMini.h>
@@ -23,12 +63,15 @@ const int BUTTON_PIN = A3;
 const int LED_PIN = D7;
 const int ANALOG_ENV_INPUT = A0;
 const int PIR_PIN = A4;
+const int EYES_SIGNAL_PIN = A5;
 
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
 const int MOUTH_CLOSED = 90;  // servo position for the mouth closed
 const int MOUTH_OPENED = 105; // servo position for the wide open mouth
 const unsigned long BUSY_WAIT = 2000UL; // busy pin wait time = 2 second
+const unsigned long EYES_START_TIME = 1000UL; // time to eye sequence to start up
+const unsigned long EYES_COMPLETE_TIME = 1000UL;  // time to eye sequence to stop
 
 // define global variables for the audio envelope data
 int maxValue = 4095; // the highest expected analog input value - for servo mapping
@@ -55,6 +98,16 @@ ClipData welcome {"11", "23", "1", "1", "2500", "0"};
 ClipData pirate {"12", "23", "1", "1", "3000", "0"};
 ClipData walkAway {"13", "23", "1", "1", "3000", "0"};
 
+// define enumerated state variable for loop() state machine
+enum StateVariable {
+    idle,
+    motionDetected,
+    clipWaiting,
+    clipPlaying,
+    clipComplete,
+    clipEnd
+};
+
 //function to set up the data and playback a clip
 void clipPlay(ClipData thisClip) {
   analogMin(thisClip.aMin);
@@ -73,6 +126,7 @@ void setup() {
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
   pinMode(PIR_PIN, INPUT);
+  pinMode(EYES_SIGNAL_PIN, OUTPUT);
 
   // register Particle Cloud functions and variables
   Particle.function("clip number", clipNum);
@@ -91,6 +145,9 @@ void setup() {
   // set up the mouth servo
   mouthServo.attach(SERVO_PIN);
 
+  // unassert the eyes signal
+  digitalWrite(EYES_SIGNAL_PIN, LOW);
+
   // blink and turn on the D7 LED on to indicate that the device is ready
   digitalWrite(LED_PIN, HIGH);
   digitalWrite(RED_LED_PIN, HIGH);
@@ -108,36 +165,95 @@ void setup() {
 } // end of setup()
 
 void loop() {
-  static bool pirFlag = false;
   static unsigned long busyTime = millis();
-  
+  static StateVariable state = idle;
+
+  // refresh the analog sampling and processing the mouth movement continuously
   speak();
 
-  // wait for the busy line to go high for BUSY_WAIT before triggering playing a clip
+  // **** process the pause button here
 
-  if( (millis() - busyTime) >= BUSY_WAIT) {
-    if(digitalRead(BUSY_PIN) == HIGH) {
-      // check the PIR; if triggered, play welcome clip
-      if(digitalRead(PIR_PIN) == HIGH) {
-        if(pirFlag == false) {  // rising edge of PIR flag
-         pirFlag = true;
-         clipPlay(welcome);
+  // state machine to signal the eyes, play the clip and move the mouth
+  switch (state) {
+    case idle:  // wait for the PIR to assert
+      if(digitalRead(BUSY_PIN) == HIGH) { // make sure mini MP3 is ready
+        // check the PIR; if triggered, play welcome clip
+        if(digitalRead(PIR_PIN) == HIGH) {
+          digitalWrite(EYES_SIGNAL_PIN, HIGH);  // signal the eyes that motion occurred
+          digitalWrite(GREEN_LED_PIN, HIGH);    // visual indication of motion    
+          busyTime = millis();    // update timer time
+          state = motionDetected; // transition to the next state
+        }
+        else {
+          state = idle; // stay in the idle state
         }
       }
-      else {
-        pirFlag = false;
+      break;
+    
+    case motionDetected:  // motion is detected, signal the eyes and wait
+      if( (millis() - busyTime) >= EYES_START_TIME) {
+          clipPlay(welcome);  // play the welcome clip
+          busyTime = millis();    // reset the timer for the next state
+          state = clipWaiting;  // transition to next state
       }
-      busyTime = millis();
-    }
+      else {
+        state = motionDetected; // stay in present state
+      }
+      break;
+
+    case clipWaiting:   // wait for busy to assert (low)
+      if(digitalRead(BUSY_PIN) == LOW) {   // now busy
+        busyTime = millis();    // reset the timer for the next state
+        state = clipPlaying;  // transition to next state
+      }
+      else {  // clip hasn't started yet
+        state = clipWaiting; // stay in present state
+      }
+      break;
+
+    case clipPlaying: // clip; playing, wait for busy to unassert (complete)
+      if(digitalRead(BUSY_PIN) == HIGH) {   // not busy anymore, clip is done
+        busyTime = millis();    // reset the timer for the next state
+        state = clipComplete;  // transition to next state
+      }
+      else {  // clip still in process of playing
+        state = clipPlaying; // stay in present state
+      }
+      break;
+
+    case clipComplete:  // clip has finished, keep eyes going a little longer
+      if( (millis() - busyTime) >= EYES_COMPLETE_TIME) {
+        digitalWrite(EYES_SIGNAL_PIN, LOW); // tell eyes that we are done
+        digitalWrite(GREEN_LED_PIN, LOW); // reset indicator
+        state = clipEnd;  // transition to next state, don't update the timer!
+      }
+      else {
+        state = clipComplete; // stay in present state
+      }
+      break;
+
+    case clipEnd:   // just make sure busy pin has been unasserted long enough
+      // test that busy pin is unasserted long enough and PIR is unasserted so don't retrigger
+      if( ((millis() - busyTime) >= BUSY_WAIT) && (digitalRead(PIR_PIN) == LOW) ) {  
+          state = idle;
+      }
+      else {
+        state = clipEnd; // stay in present state
+      }
+      break;      
+
+    default:
+      // the next state is idle
+      state = idle;
+
   }
+
   // button check - no debounding yet
   if(digitalRead(BUTTON_PIN) == LOW) {  // button is activated
     digitalWrite(RED_LED_PIN, HIGH);
-    digitalWrite(GREEN_LED_PIN, LOW);
   }
   else {
     digitalWrite(RED_LED_PIN, LOW);
-    digitalWrite(GREEN_LED_PIN, HIGH);
   }
 
 } // end of loop()
