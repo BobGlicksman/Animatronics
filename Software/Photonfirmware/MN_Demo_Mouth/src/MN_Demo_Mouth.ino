@@ -11,6 +11,15 @@
  *  the mouth sequence can be retriggered.  This ensures that the sequence is not retirggered until
  *  people leave the PIR field of view.
  * 
+ *  The project supports an external Green LED and an external Red LED.  The Green LED indicates
+ *  that the speaking sequence is in progress and the speech cannot be retriggered if the PIR
+ *  is triggered again within this time period.  This is to prevent the speaking sequence from
+ *  being retriggered while someone remains in front of the animatronic demo but is moving
+ *  around (or a one-shot, vs retriggering type of PIR is used).  The Red LED lights when the
+ *  button is pressed, indicating that the demo will pause at the conclusion of the speaking
+ *  sequence.  The speaking sequence is paused until the button is pressed again, at which point
+ *  the Red LED goes out and the speaking sequence can be retriggered.
+ * 
  *  The following Photon pins are used:
  *    D0, D1: these are reserved for I2C and brought out to the I2C PCB connector.  These
  *      pins are not used for the mouth function at this time.   
@@ -35,12 +44,13 @@
  *  any values as defaults are provided that have been determined to be optimal via
  *  prior experimentation.  However, the ability to change these without having to recompile
  *  the software is retained.
- * 
- * **** this code is still in development.  It needs the pause button implementation.
  *      
- * Author: Bob Glicksman (Jim Schrempp, Team Practical Projects)
+ * Author: Bob Glicksman, Jim Schrempp, Team Practical Projects
+ * (c) 2021, Team practical projects.  All rights reserved.
+ * Released under open source, non-commercial license.
  * Date: 4/20/21
  * 
+ * version 1.0: initial release; full capability
  * version 0.2: implemented and tested button state machine. Need to add pause state.
  * version 0.1: code is tested but needs pause button to be implemented.
  * 
@@ -107,7 +117,8 @@ enum StateVariable {
   clipWaiting,
   clipPlaying,
   clipComplete,
-  clipEnd
+  clipEnd,
+  paused
 };
 
 // define enumerated state variable for buttonPressed() function
@@ -115,7 +126,7 @@ enum ButtonStates {
   buttonOff,    // the button is not pressed
   pressedTentative,   // button seems to be pressed, need debounce verification
   buttonOn, // button remains pressed but don't indicate true anymore
-  releasedTentative,  // button seems to be released, need verificaton
+  releasedTentative  // button seems to be released, need verificaton
 };
 
 //function to set up the data and playback a clip
@@ -186,15 +197,13 @@ void loop() {
   if(buttonPressed() == true) {
     buttonToggle = !buttonToggle;
   }
-
-  // test code before processing the toggle
+  // the RED LED is the pause state indicator
   if(buttonToggle == true) {
     digitalWrite(RED_LED_PIN, HIGH);
   }
   else {
-    digitalWrite(RED_LED_PIN, LOW);
+    digitalWrite(RED_LED_PIN, LOW);    
   }
-  // end of test code
 
   // state machine to signal the eyes, play the clip and move the mouth
   switch (state) {
@@ -258,12 +267,26 @@ void loop() {
     case clipEnd:   // just make sure busy pin has been unasserted long enough
       // test that busy pin is unasserted long enough and PIR is unasserted so don't retrigger
       if( ((millis() - busyTime) >= BUSY_WAIT) && (digitalRead(PIR_PIN) == LOW) ) {  
-          state = idle;
+          if(buttonToggle == false) { // no pause state indicated
+            state = idle;
+          }
+          else {    // we must go to pause state
+            state = paused;
+          }
       }
       else {
         state = clipEnd; // stay in present state
       }
-      break;      
+      break;    
+
+      case paused: //   we stay in pause state until buttonToggle is toggled false
+        if(buttonToggle == true) {  // stay in paused state
+          state = paused;
+        }
+        else {    // exit the pause state - return to idle
+          state = idle;
+        }
+        break;
 
     default:
       // the next state is idle
