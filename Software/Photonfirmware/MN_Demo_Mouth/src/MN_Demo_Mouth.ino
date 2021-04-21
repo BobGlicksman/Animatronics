@@ -41,7 +41,8 @@
  * Author: Bob Glicksman (Jim Schrempp, Team Practical Projects)
  * Date: 4/20/21
  * 
- * version: 0.1: code is tested but needs pause button to be implemented.
+ * version 0.2: implemented and tested button state machine. Need to add pause state.
+ * version 0.1: code is tested but needs pause button to be implemented.
  * 
  */
 
@@ -72,6 +73,7 @@ const int MOUTH_OPENED = 105; // servo position for the wide open mouth
 const unsigned long BUSY_WAIT = 2000UL; // busy pin wait time = 2 second
 const unsigned long EYES_START_TIME = 1000UL; // time to eye sequence to start up
 const unsigned long EYES_COMPLETE_TIME = 1000UL;  // time to eye sequence to stop
+const unsigned long DEBOUNCE_TIME = 10UL; // time for button debouncing
 
 // define global variables for the audio envelope data
 int maxValue = 4095; // the highest expected analog input value - for servo mapping
@@ -100,12 +102,20 @@ ClipData walkAway {"13", "23", "1", "1", "3000", "0"};
 
 // define enumerated state variable for loop() state machine
 enum StateVariable {
-    idle,
-    motionDetected,
-    clipWaiting,
-    clipPlaying,
-    clipComplete,
-    clipEnd
+  idle,
+  motionDetected,
+  clipWaiting,
+  clipPlaying,
+  clipComplete,
+  clipEnd
+};
+
+// define enumerated state variable for buttonPressed() function
+enum ButtonStates {
+  buttonOff,    // the button is not pressed
+  pressedTentative,   // button seems to be pressed, need debounce verification
+  buttonOn, // button remains pressed but don't indicate true anymore
+  releasedTentative,  // button seems to be released, need verificaton
 };
 
 //function to set up the data and playback a clip
@@ -167,11 +177,24 @@ void setup() {
 void loop() {
   static unsigned long busyTime = millis();
   static StateVariable state = idle;
+  static bool buttonToggle = false;   // if set true, put demo in pause mode
 
   // refresh the analog sampling and processing the mouth movement continuously
   speak();
 
-  // **** process the pause button here
+  // check button status and toggle pause mode if button has been pressed
+  if(buttonPressed() == true) {
+    buttonToggle = !buttonToggle;
+  }
+
+  // test code before processing the toggle
+  if(buttonToggle == true) {
+    digitalWrite(RED_LED_PIN, HIGH);
+  }
+  else {
+    digitalWrite(RED_LED_PIN, LOW);
+  }
+  // end of test code
 
   // state machine to signal the eyes, play the clip and move the mouth
   switch (state) {
@@ -245,15 +268,6 @@ void loop() {
     default:
       // the next state is idle
       state = idle;
-
-  }
-
-  // button check - no debounding yet
-  if(digitalRead(BUTTON_PIN) == LOW) {  // button is activated
-    digitalWrite(RED_LED_PIN, HIGH);
-  }
-  else {
-    digitalWrite(RED_LED_PIN, LOW);
   }
 
 } // end of loop()
@@ -388,4 +402,78 @@ int nlp(String processType) {
   nlProcess = processType.toInt();
   return nlProcess;
 } // end of nlp()
+
+// function to detect when the button is pressed, including debounce verification
+bool buttonPressed() {
+  static ButtonStates _buttonState = buttonOff;
+  static unsigned long lastTime = millis();
+
+  switch(_buttonState) {
+
+    case buttonOff:
+      if(digitalRead(BUTTON_PIN) == HIGH) { // button not pressed
+        _buttonState = buttonOff;
+        return false;
+      }
+      else {  // button is pressed, need to debounce and verify
+        lastTime = millis();  // set up the timer'
+        _buttonState = pressedTentative;
+        return false;
+      }
+
+    case pressedTentative:   // button seems to be pressed, need debounce verification
+      if(digitalRead(BUTTON_PIN) == HIGH) { // button not pressed
+        _buttonState = buttonOff;
+        return false;
+      }
+      else {  // button is pressed
+        if( (millis() - lastTime < DEBOUNCE_TIME)) { // button not yet debounced
+          _buttonState = pressedTentative; 
+          return false;
+        }
+        else {  // button is debounced
+          _buttonState = buttonOn;
+          return true;  // tell caller that the button has been presed
+        }
+      }
+
+    case buttonOn: // button remains pressed but don't indicate true anymore
+      if(digitalRead(BUTTON_PIN) == LOW)  { // button remains pressed, stay here
+        _buttonState = buttonOn;
+        return false;
+      }
+      else {  // button tentatively released, need to verify
+        lastTime = millis();  // set timer for debounce
+        _buttonState = releasedTentative;
+        return false;
+      }
+
+    case releasedTentative:  // button seems to be released, need verificaton
+      if(digitalRead(BUTTON_PIN) == HIGH) { // button still released
+        if( (millis() - lastTime < DEBOUNCE_TIME)) {  // not yet debounced
+          _buttonState = releasedTentative;
+          return false;
+        }
+        else {  // debounced and verified released
+          _buttonState = buttonOff;
+          return false;
+        }
+      }
+      else {  // false reading, button still pressed
+        _buttonState = buttonOn;
+        return false;
+      }
+
+    default:
+      if(digitalRead(BUTTON_PIN) == HIGH) { // button not pressed
+        _buttonState = buttonOff;
+        return false;
+      }
+      else {  // button is pressed
+        _buttonState = pressedTentative;
+        return false;
+      }
+  }
+
+} // end of buttonPressed()
 
