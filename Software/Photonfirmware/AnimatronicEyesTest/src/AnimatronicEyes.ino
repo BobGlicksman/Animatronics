@@ -323,7 +323,7 @@ void sequenceAsleep(int delayAfterMS) {
 
     animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_IMMEDIATE, -1);
     animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, delayAfterMS);
-    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, 0);
+    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, 0); // need this so animation is still "running" after the                                                               // previous call with a delay.
 
 }
 
