@@ -5,17 +5,25 @@
  * 
  * This is a hack of Nilheim Mechatronics code to see how we like it. His eye mechanism
  * is very cool. https://www.instructables.com/Simplified-3D-Printed-Animatronic-Dual-Eye-Mechani/
+ * 
+ * Pins
+ *    A5: signal (3.3 volts/gnd) from the mouth processor.  Asserted (+3.3 volts) when
+ *      the eyes should start a welcome sequence, and unasserts when the eyes can terminate
+ *      the welcome sequence and return to "sleeping".
  *
  * (cc) Share Alike - Non Commercial - Attibution
  * 2020 Bob Glicksman and Jim Schrempp
  * 
+ * v1.2 Added control on pin A5. A5 going HIGH terminates current sequence and starts a more
+ *      attentive sequence. When A5 going LOW should sleep the eyes for five seconds, then return
+ *      to normal activity.
  * v1.1 Now with idle eye movements and a wake up sequence
  * v1.0 First checkin with everything working to do a small 8 step animation
  *    
  */ 
 
 
-const String version = "1.0";
+const String version = "1.2";
  
 //SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
@@ -26,16 +34,19 @@ SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer t
 
 #define CALLIBRATION_TEST 
 #define DEBUGON
+#define TRIGGER_PIN A5
 
-SerialLogHandler logHandler1(LOG_LEVEL_WARN, {  // Logging level for non-application messages
-    { "app.main", LOG_LEVEL_INFO }               // Logging for main loop
+
+SerialLogHandler logHandler1(LOG_LEVEL_INFO, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
+    { "app.main", LOG_LEVEL_ALL }               // Logging for main loop
     ,{ "app.puppet", LOG_LEVEL_INFO }               // Logging for Animate puppet methods
-    ,{ "app.anilist", LOG_LEVEL_INFO }               // Logging for Animation List methods
+    ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
     ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
+    ,{"comm.protocol", LOG_LEVEL_WARN}          // particle communication system 
 });
 
 Logger mainLog("app.main");
-  
+
 // This is the master class that holds all the objects to be controlled
 animationList animation1;  // When doing a programmed animation, this is the list of
                            // scenes and when they are to be played
@@ -116,6 +127,8 @@ void animationTimerCallback() {
 //------ setup -----------
 void setup() {
 
+    pinMode(TRIGGER_PIN, INPUT);
+
     delay(1000);
     mainLog.info("===========================================");
     mainLog.info("===========================================");
@@ -151,21 +164,66 @@ void setup() {
 void loop() {
 
     static bool firstLoop = true;
+    static bool mouthTriggered = false;
+
 
     if (firstLoop){
 
         firstLoop = false;
-        mainLog.info("start up");
+        mainLog.info("eyes start up");
 
     }
 
-    // if there is no animation running, then let the eyes roam
-    if (!animation1.isRunning()) {
-        animation1.clearSceneList();
-        sequenceEyesRoam();
-        animation1.startRunning();
+    // have we been triggered by the mouth?
+    if (digitalRead(TRIGGER_PIN) == HIGH) {
+        
+        if (mouthTriggered) {
+            // we are already running, refresh the sequence if needed
+            if (!animation1.isRunning()) {
+                mainLog.info("triggered refresh");
+                animation1.stopRunning();
+                animation1.clearSceneList();
+                sequenceEyesRoamAhead();
+                animation1.startRunning();
+            } 
+        } else {
+            // we have been triggered, start the sequence
+            mouthTriggered = true;
+            //start the appropriate sequence
+            mainLog.info("eyes triggered");
+            animation1.stopRunning();
+            animation1.clearSceneList();
+            sequenceEyesRoamAhead();
+            animation1.startRunning();
+        } 
+
+    } else {
+
+        // trigger pin is low
+        if (!mouthTriggered) {
+            // nothing to do, we are already stopped
+
+        } else {
+            //trigger has gone away
+            mouthTriggered = false;
+            mainLog.info("trigger stop and set asleep");
+            // stop the sequence and go to sleep sequence
+            animation1.stopRunning();
+            animation1.clearSceneList();
+            sequenceAsleep(5000);
+            animation1.startRunning();
+        }
+
     }
 
+    if (!mouthTriggered) {
+        // if there is no animation running, then let the eyes roam
+        if (!animation1.isRunning()) {
+            animation1.clearSceneList();
+            sequenceEyesRoam();
+            animation1.startRunning();
+        }
+    }
     animationTimerCallback();
 
 }
@@ -265,6 +323,7 @@ void sequenceAsleep(int delayAfterMS) {
 
     animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_IMMEDIATE, -1);
     animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, delayAfterMS);
+    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, 0); // need this so animation is still "running" after the                                                               // previous call with a delay.
 
 }
 
@@ -286,6 +345,8 @@ void sequenceEyesWake(int delayAfterMS){
 }
 
 void sequenceEyesRoam() {
+    // Eyes roam with saccade between several points 
+    // (this isn't done yet)
 
     static int posLeftRight = 50;
     static int posUpDown = 50;
@@ -304,6 +365,32 @@ void sequenceEyesRoam() {
         int delay = random(500,1000);
 
         if(random(0,100) > 80){
+            sequenceBlinkEyes(-1);
+        }
+        animation1.addScene(sceneEyesLeftRight, posLeftRight, speed, -1);
+        animation1.addScene(sceneEyesUpDown, posUpDown, speed, delay);
+        
+    }
+
+}
+
+void sequenceEyesRoamAhead() {
+    // Eyes basically look ahead, but saccade 
+    // this creates a sequence of 30 scenes
+    randomSeed(micros());
+
+    animation1.addScene(sceneEyesOpen,100,100,-1);
+
+    for (int i=0; i<30; i++){
+
+        // pick left/right and up/down
+        int posLeftRight = random(40,60);
+        int posUpDown = random(40,60);
+
+        float speed = random(1,20) / 10.0;
+        int delay = random(200,400);
+
+        if(random(0,100) > 90){
             sequenceBlinkEyes(-1);
         }
         animation1.addScene(sceneEyesLeftRight, posLeftRight, speed, -1);
