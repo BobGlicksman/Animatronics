@@ -2,11 +2,18 @@
 
 ## Overview.
 This repository contains experimental hardware, software and documentation for figuring out
-ways to control an animatronic device's mouth to simulate speech.  The ultimate goal is to
-be able to record speech/music and have a robotic mouth move along with the sound in a 
-somewhat realistic manner.
+ways to control an animatronic device's mouth and eyes to simulate a human-like puppet. 
 
-The operating assumptions are:
+## The ultimate goal is to
+A. Be able to record speech/music and have a robotic mouth move along with the sound in a 
+somewhat realistic manner.
+B. Trigger some realistic animation behavior when a person approaches the puppet. 
+
+
+## The operating assumptions are:
+
+### A. Mouth
+
 1. the robotic mouth will be driven by a single servo.  The servo controls the mouth open/closed
 position in synch with the overall envelope of the sound source.  The envelope of the sound source
 is the overall pattern of sound amplitude with the "carrier" removed; i.e. extracting the
@@ -31,7 +38,19 @@ the mouth servo at a lower rate (than 50 movements per second).  A key goal of t
 how many samples should be averaged to drive the mouth servo in a realistic manner.  Another key goal of this 
 project to to determine how to properly scale (averaged) sample values to servo position movements.
 
-6. the overall project concept is:
+### B. Eyes
+
+1. We use an eye mechanism built from this project https://www.instructables.com/Simplified-3D-Printed-Animatronic-Dual-Eye-Mechani/
+of Nilheim Mechatronics.  They have a YouTube channel:  https://goo.gl/7Cle6h
+
+2. We will modify the eye mechanism as needed to suit our project. Changed STL files will be published in this GitHub repository.
+
+3. The mouth will have sensors used to detect people in the area of the puppet. The eyes will be triggered from the mouth mechanism to take action appropriate to a speaking person.
+
+4. When not triggered by the mouth, the eyes will often be "asleep" but occasionally "wake" to look around.
+
+
+## The overall project concept is:
 
 MP3 board --> analog processing circuit --> Photon ADC --> Photon firmware processing --> Servo control
 
@@ -40,6 +59,10 @@ MP3 board --> analog processing circuit --> Photon ADC --> Photon firmware proce
 
 Additionally:
 Sensor (TBD) --> Photon --> firmware --> Photon Tx/Rx ---> MP3 board track select and control
+
+And: 
+Photon firmware processing of mouth --> Photon firmware of eyes
+
 
 ## Repository contents.
 ### Data.
@@ -71,7 +94,7 @@ LTspice file of the analog processing circuit with input from a .wav file.
 #### DFPlayer Mini Manual.pdf:  
 manual for a candidate MP3 player for this project.
 
-### Software/Photon Firmware/AnimatronicMouthTest/src.
+### Software/Photonfirmware/AnimatronicMouthTest/src.
 #### AnimatronicMouthTest.ino:  
 Photon source firmware for testing out a robotic mouth driven
 by a servo. Pin connections are for the Team Practical Projects "Wireless I/O Board"
@@ -82,3 +105,13 @@ The data array included in this sorce code file is the data from the spreadsheet
 #### workspace.code-workspace: 
 "workspace" file for the Particle Workbench.  This is needed only if
 viewing/editing "AnimatronicMouthTest.ino" using the Particle Workbench.
+
+### Software/Photonfirmware/AnimatronicEyesTest
+#### AnimatronicEyes.ino
+Photon source firmware for controlling the eyes
+#### TPPAnimatePuppet.h/.cpp
+A layer to link behaviors between several physical mechanisms. Perhaps to have the head rotate when the eyes move in a particular direction. This module calls TPPAnimateServo.
+#### TPPAnimateServo.h/.cpp
+Wraps the AdaFruit servo board to allow non blocking calls to move a servo over a certain distance over a certain time frame. Sample operation: Move servo 2 from 70 degrees to 120 degrees over 6 seconds.
+#### TPPAnimationList.h/.cp
+A module to maintain a sequence of "scenes" (positions of a different physical mechanisms) and transition between them at a time delay specified by the caller. Sample operation: move eyes left 80% and head down by 10%, wait 100 milliseconds, then move eyelids open 100% and head up to 50%, wait 300 milliseconds, then move the head left 60%, etc, etc. This module calls TPPAnimatePuppet.
