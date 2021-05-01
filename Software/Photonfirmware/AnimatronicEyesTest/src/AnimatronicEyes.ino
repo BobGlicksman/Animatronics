@@ -31,11 +31,13 @@ SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer t
 #include <Wire.h>
 #include <TPPAnimationList.h>
 #include <TPPAnimatePuppet.h>
+#include <eyeservosettings.h>
 
 #define CALLIBRATION_TEST 
 #define DEBUGON
 #define TRIGGER_PIN A5
 
+const long IDLE_SEQUENCE_MIN_WAIT_MS = 120000; //2 min // during idle times, random activity will happen longer than this
 
 SerialLogHandler logHandler1(LOG_LEVEL_INFO, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
     { "app.main", LOG_LEVEL_ALL }               // Logging for main loop
@@ -60,31 +62,7 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 #define R_UPPERLID_SERVO 4
 #define R_LOWERLID_SERVO 5
 
-// Servo Positions
-// Use the calibration test code to figure the correct values for each.
-// THE CALIBRATION TEST WILL PRINT A SET OF DEFINES THAT YOU CAN COPY
-// AND PASTE OVER THE ONES BELOW. 
-// -------------------------------------------------------------------
-// -------------------------------------------------------------------
 
-    #define X_POS_MID 479
-    #define X_POS_LEFT_OFFSET 115
-    #define X_POS_RIGHT_OFFSET -128
-
-    #define Y_POS_MID 343
-    #define Y_POS_UP_OFFSET 93
-    #define Y_POS_DOWN_OFFSET -72
-
-    #define LEFT_UPPER_CLOSED 473
-    #define LEFT_UPPER_OPEN 260
-
-    #define LEFT_LOWER_CLOSED 317
-    #define LEFT_LOWER_OPEN 498
-
-    #define RIGHT_UPPER_OFFSET 760
-    #define RIGHT_LOWER_OFFSET 700
-// -------------------------------------------------------------------
-// -------------------------------------------------------------------
 
 
 //------- midValue --------
@@ -157,6 +135,7 @@ void setup() {
 
     //sequenceGeneralTests();
     sequenceLookReal();
+    sequenceAsleep(1000);
     
 }
 
@@ -165,7 +144,7 @@ void loop() {
 
     static bool firstLoop = true;
     static bool mouthTriggered = false;
-
+    static long lastIdleSequenceStartTime = 0;
 
     if (firstLoop){
 
@@ -210,17 +189,54 @@ void loop() {
             // stop the sequence and go to sleep sequence
             animation1.stopRunning();
             animation1.clearSceneList();
-            sequenceAsleep(5000);
+            sequenceAsleep(30000);
             animation1.startRunning();
         }
 
     }
 
+    // We are not mouth triggered, so decide if we want to have 
+    // the puppet do some random thing
     if (!mouthTriggered) {
-        // if there is no animation running, then let the eyes roam
-        if (!animation1.isRunning()) {
+        
+        if (!animation1.isRunning() && 
+            (millis() - lastIdleSequenceStartTime > IDLE_SEQUENCE_MIN_WAIT_MS)) {
+            // there is no animation running, and we haven't done any random
+            // thing for at least IDLE_SEQUENCE_MIN_WAIT_TS
+
             animation1.clearSceneList();
-            sequenceEyesRoam();
+            lastIdleSequenceStartTime = millis();
+
+            int thisRandom = random(100);
+            if (thisRandom > 80) {
+                //20%
+                sequenceWakeUpSlowly(0);
+                sequenceAsleep(5000);
+                Particle.publish("Idle option 1");
+            } else if (thisRandom > 60){
+                //20%
+                sequenceWakeUpSlowly(0);
+                sequenceEyesRoam();
+                sequenceAsleep(5000);
+                Particle.publish("Idle option 2");
+            } else if (thisRandom > 20){
+                //20%
+                sequenceEyesRoamAhead();
+                sequenceEyesRoamAhead();
+                sequenceEyesRoamAhead();
+                sequenceEyesRoamAhead();
+                sequenceAsleep(5000);
+                Particle.publish("Idle option 3");
+            } else if (thisRandom > 0){
+                //20%
+                sequenceBlinkEyes(1000);
+                sequenceBlinkEyes(100);
+                sequenceBlinkEyes(100);
+                sequenceBlinkEyes(100);
+                sequenceAsleep(5000);
+                Particle.publish("Idle option 4");
+            }
+
             animation1.startRunning();
         }
     }
