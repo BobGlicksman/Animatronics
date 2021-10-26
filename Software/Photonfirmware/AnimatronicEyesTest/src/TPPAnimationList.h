@@ -63,10 +63,12 @@ enum eScene {
     sceneBlink
 };
 
-#define EYES_LEFT 0
-#define EYES_RIGHT 100
-#define EYES_UP 0
-#define EYES_DOWN 100
+#define EYES_LEFT 100
+#define EYES_X_MID 50
+#define EYES_RIGHT 0
+#define EYES_UP 100
+#define EYES_Y_MID 50
+#define EYES_DOWN 0
 
 
 class animationList {
