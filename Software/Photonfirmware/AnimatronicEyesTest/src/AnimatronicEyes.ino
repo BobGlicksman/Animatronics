@@ -14,16 +14,20 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2020 Bob Glicksman and Jim Schrempp
  * 
+ * v1.3 Changed eye lid constants so that they are not coupled between left and right - now
+ *      each lid has its own settings. 
  * v1.2 Added control on pin A5. A5 going HIGH terminates current sequence and starts a more
  *      attentive sequence. When A5 going LOW should sleep the eyes for five seconds, then return
  *      to normal activity.
+ *      Moved the servo settings to eyeservosettings.h
+ *      During idle times eyes now mostly sleep with a wakeup every IDLE_SEQUENCE_MIN_WAIT_MS
  * v1.1 Now with idle eye movements and a wake up sequence
  * v1.0 First checkin with everything working to do a small 8 step animation
  *    
  */ 
 
 
-const String version = "1.2";
+const String version = "1.3";
  
 //SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
@@ -33,7 +37,7 @@ SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer t
 #include <TPPAnimatePuppet.h>
 #include <eyeservosettings.h>
 
-#define CALLIBRATION_TEST 
+//#define VERIFY_CALIBRATION_ONLY 
 #define DEBUGON
 #define TRIGGER_PIN A5
 
@@ -117,8 +121,8 @@ void setup() {
 
     animation1.puppet.eyelidLeftUpper.init(L_UPPERLID_SERVO, LEFT_UPPER_OPEN, LEFT_UPPER_CLOSED);
     animation1.puppet.eyelidLeftLower.init(L_LOWERLID_SERVO, LEFT_LOWER_OPEN, LEFT_LOWER_CLOSED);
-    animation1.puppet.eyelidRightUpper.init(R_UPPERLID_SERVO, RIGHT_UPPER_OFFSET - LEFT_UPPER_OPEN, RIGHT_UPPER_OFFSET - LEFT_UPPER_CLOSED);
-    animation1.puppet.eyelidRightLower.init(R_LOWERLID_SERVO, RIGHT_LOWER_OFFSET - LEFT_LOWER_OPEN, RIGHT_LOWER_OFFSET - LEFT_LOWER_CLOSED);
+    animation1.puppet.eyelidRightUpper.init(R_UPPERLID_SERVO, RIGHT_UPPER_OPEN, RIGHT_UPPER_CLOSED);
+    animation1.puppet.eyelidRightLower.init(R_LOWERLID_SERVO, RIGHT_LOWER_OPEN, RIGHT_LOWER_CLOSED);
 
 
     // Establish Animation List
@@ -133,9 +137,17 @@ void setup() {
     animation1.startRunning();
     animation1.process();
 
-    //sequenceGeneralTests();
+#ifdef VERIFY_CALIBRATION_ONLY
+
+    // Just show that the eye servo settings work
+    sequenceCalibrationConfirmation();
+
+#else
+
     sequenceLookReal();
     sequenceAsleep(1000);
+
+#endif
     
 }
 
@@ -152,6 +164,7 @@ void loop() {
         mainLog.info("eyes start up");
 
     }
+#ifndef VERIFY_CALIBRATION_ONLY
 
     // have we been triggered by the mouth?
     if (digitalRead(TRIGGER_PIN) == HIGH) {
@@ -240,7 +253,43 @@ void loop() {
             animation1.startRunning();
         }
     }
+
+#endif
+
     animationTimerCallback();
+
+}
+
+void sequenceCalibrationConfirmation() {
+
+    sequenceBlinkEyes(1000);
+    mainLog.info("CALIBRATION test: eyes ahead, open");
+    animation1.addScene(sceneEyesAheadOpen, -1, MOVE_SPEED_SLOW, 1000);
+
+    sequenceBlinkEyes(1000);
+
+    mainLog.info("CALIBRATION test: eyes right");
+    animation1.addScene(sceneEyesLeftRight, EYES_RIGHT, MOVE_SPEED_SLOW, 1000);
+    mainLog.info("CALIBRATION test: eyes left");
+    animation1.addScene(sceneEyesLeftRight, EYES_LEFT, MOVE_SPEED_SLOW, 1000);
+    mainLog.info("CALIBRATION test: eyes x mid");
+    animation1.addScene(sceneEyesLeftRight, EYES_X_MID, MOVE_SPEED_SLOW, 1000);
+
+    sequenceBlinkEyes(1000);
+    animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, 1000);
+
+    mainLog.info("CALIBRATION test: eyes up");
+    animation1.addScene(sceneEyesUpDown, EYES_UP, MOVE_SPEED_SLOW, 1000);
+    mainLog.info("CALIBRATION test: eyes down");
+    animation1.addScene(sceneEyesUpDown, EYES_DOWN, MOVE_SPEED_SLOW, 1000);
+    mainLog.info("CALIBRATION test: eyes y mid");
+    animation1.addScene(sceneEyesUpDown, EYES_Y_MID, MOVE_SPEED_SLOW, 1000);
+
+    sequenceBlinkEyes(1000);
+    animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, 1000);
+
+    sequenceBlinkEyes(1000);
+    sequenceBlinkEyes(1000);
 
 }
 

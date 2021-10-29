@@ -1,6 +1,7 @@
 *.pem
 *.bin
 *.der
-AnimatronicEyes.cpp
+src/AnimatronicEyes.cpp
 .vscode/*
 target/*
+
