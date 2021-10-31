@@ -14,6 +14,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2020 Bob Glicksman and Jim Schrempp
  * 
+ * v1.4 Added kill switch to stop the eyes. Also changed wake up to be more realistic.
  * v1.3 Changed eye lid constants so that they are not coupled between left and right - now
  *      each lid has its own settings. 
  * v1.2 Added control on pin A5. A5 going HIGH terminates current sequence and starts a more
@@ -27,7 +28,7 @@
  */ 
 
 
-const String version = "1.3";
+const String version = "1.4";
  
 //SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
@@ -40,8 +41,9 @@ SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer t
 //#define VERIFY_CALIBRATION_ONLY 
 #define DEBUGON
 #define TRIGGER_PIN A5
+#define KILL_BUTTON_PIN A4
 
-const long IDLE_SEQUENCE_MIN_WAIT_MS = 120000; //2 min // during idle times, random activity will happen longer than this
+const long IDLE_SEQUENCE_MIN_WAIT_MS = 10000; //30 sec // during idle times, random activity will happen longer than this
 
 SerialLogHandler logHandler1(LOG_LEVEL_INFO, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
     { "app.main", LOG_LEVEL_ALL }               // Logging for main loop
@@ -110,6 +112,7 @@ void animationTimerCallback() {
 void setup() {
 
     pinMode(TRIGGER_PIN, INPUT);
+    pinMode(KILL_BUTTON_PIN,INPUT_PULLUP);
 
     delay(1000);
     mainLog.info("===========================================");
@@ -164,7 +167,42 @@ void loop() {
         mainLog.info("eyes start up");
 
     }
+
+    // this is called every time to make the animation run
+    animationTimerCallback();
+
 #ifndef VERIFY_CALIBRATION_ONLY
+
+    static bool weAreAlive = true; // when true we will not run
+
+   // has the sleep button been pressed?
+    static int lastKillButtonState = switchReadStateBUTTON_PIN();
+    if(switchReadStateBUTTON_PIN() != lastKillButtonState){
+
+        lastKillButtonState = switchReadStateBUTTON_PIN();
+        // invert alive/dead state
+        mainLog.info("kill button pressed");
+
+        if (weAreAlive){
+            mainLog.info("we are now going to die");
+            weAreAlive = false;
+            animation1.stopRunning();
+            animation1.clearSceneList();
+            sequenceAsleep(1000);
+            animation1.startRunning();
+        } else {
+            mainLog.info("we are now alive again");
+            weAreAlive = true;
+        }
+        
+    }
+
+    if (!weAreAlive){
+        //we're dead so do nothing else
+        return;
+    }
+
+ 
 
     // have we been triggered by the mouth?
     if (digitalRead(TRIGGER_PIN) == HIGH) {
@@ -224,14 +262,15 @@ void loop() {
             if (thisRandom > 80) {
                 //20%
                 sequenceWakeUpSlowly(0);
+                sequenceEyesRoam();
                 sequenceAsleep(5000);
-                Particle.publish("Idle option 1");
+                mainLog.info("Idle option 1");
             } else if (thisRandom > 60){
                 //20%
                 sequenceWakeUpSlowly(0);
                 sequenceEyesRoam();
                 sequenceAsleep(5000);
-                Particle.publish("Idle option 2");
+                mainLog.info("Idle option 2");
             } else if (thisRandom > 20){
                 //20%
                 sequenceEyesRoamAhead();
@@ -239,15 +278,13 @@ void loop() {
                 sequenceEyesRoamAhead();
                 sequenceEyesRoamAhead();
                 sequenceAsleep(5000);
-                Particle.publish("Idle option 3");
+                mainLog.info("Idle option 3");
             } else if (thisRandom > 0){
                 //20%
                 sequenceBlinkEyes(1000);
                 sequenceBlinkEyes(100);
-                sequenceBlinkEyes(100);
-                sequenceBlinkEyes(100);
                 sequenceAsleep(5000);
-                Particle.publish("Idle option 4");
+                mainLog.info("Idle option 4");
             }
 
             animation1.startRunning();
@@ -256,7 +293,7 @@ void loop() {
 
 #endif
 
-    animationTimerCallback();
+
 
 }
 
@@ -387,18 +424,33 @@ void sequenceWakeUpSlowly(int delayAfterMS) {
 void sequenceAsleep(int delayAfterMS) {
 
     animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_IMMEDIATE, -1);
-    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, delayAfterMS);
-    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, 0); // need this so animation is still "running" after the                                                               // previous call with a delay.
+    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_SLOW, delayAfterMS);
+    animation1.addScene(sceneEyesOpen, 0, MOVE_SPEED_IMMEDIATE, 0); // need this so animation is still "running" after the 
+                                                                  // previous call with a delay.
 
 }
 
 void sequenceEyesWake(int delayAfterMS){
 
-    animation1.addScene(sceneEyelidsLeft, eyelidSlit, .1, -1);
+    int thisRandom = random(3);
+    switch (thisRandom) {
+        case 0:
+            animation1.addScene(sceneEyelidsLeft, eyelidSlit, .1, -1);
+            break;
+        case 1: 
+            animation1.addScene(sceneEyelidsRight, eyelidSlit, .1, -1);
+            break;
+        case 2:
+            animation1.addScene(sceneEyelidsLeft, eyelidSlit, .1, -1);
+            animation1.addScene(sceneEyelidsRight, eyelidSlit, .1, -1);
+            break;
+
+    }
     animation1.addScene(sceneEyesLeftRight, 0, .2, 1000);
     animation1.addScene(sceneEyesLeftRight, 100, .2, 2000);
     animation1.addScene(sceneEyesLeftRight, 50, .5, -1);
     animation1.addScene(sceneEyelidsLeft, eyelidClosed, .2, 1000);
+    animation1.addScene(sceneEyelidsRight, eyelidClosed, .2, 1000);
     animation1.addScene(sceneEyesLeftRight, 75, .2, -1);
     animation1.addScene(sceneEyesOpen, eyelidSlit, .1, -1);
     animation1.addScene(sceneEyesLeftRight, 35, .2, 2000);
@@ -423,7 +475,7 @@ void sequenceEyesRoam() {
         // pick left/right and up/down
         //posLeftRight = posLeftRight + random(2,20) - 9;
         //posUpDown = posUpDown + random(2,20) - 9;
-        posLeftRight = random(25,75);
+        posLeftRight = random(10,90);
         posUpDown = random(25,75);
 
         float speed = random(1,20) / 10.0;
@@ -449,7 +501,7 @@ void sequenceEyesRoamAhead() {
     for (int i=0; i<30; i++){
 
         // pick left/right and up/down
-        int posLeftRight = random(40,60);
+        int posLeftRight = random(20,80);
         int posUpDown = random(40,60);
 
         float speed = random(1,20) / 10.0;
@@ -482,4 +534,59 @@ void sequenceBlinkEyes(int delayAfterMS) {
     animation1.addScene(sceneEyelidsRight, eyelidNormal, MOVE_SPEED_IMMEDIATE, -1);
     animation1.addScene(sceneEyelidsLeft, eyelidNormal, MOVE_SPEED_IMMEDIATE, delayAfterMS);
     
+}
+
+//---------- buttonWasPushedBUTTON_PIN 
+// Returns true if BUTTON_PIN goes HIGH to LOW
+bool buttonWasPushedBUTTON_PIN() {
+    
+    static int lastSwitchState = HIGH;
+    int retCode = false;
+
+    // only return true if the button state goes HIGH to LOW
+    int switchState = switchReadStateBUTTON_PIN();
+    if ( switchState == LOW) {
+    if (lastSwitchState == HIGH) {
+        // Switch was HIGH, now LOW
+        retCode = true;
+    }
+    }
+    lastSwitchState = switchState; 
+    return retCode;
+}
+
+//-------- switchReadStateBUTTON_PIN
+// returns the debounced value of BUTTON_PIN
+int switchReadStateBUTTON_PIN() {
+
+    static int switchState = HIGH;   // the value of the switch that is returned
+    static int lastButtonState = HIGH;   // the previous reading from the input pin
+    static unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
+    static bool firstTime = true;     // first time called since starting
+    unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
+
+    if (firstTime){
+        firstTime = false;
+        // init to what the button is now
+        lastButtonState =  digitalRead(KILL_BUTTON_PIN);
+        switchState = lastButtonState;
+    }
+
+    // read the state of the switch into a local variable:
+    int reading = digitalRead(KILL_BUTTON_PIN);
+
+    // If the switch changed, due to noise or pressing:
+    if (reading != lastButtonState) {
+        // reset the debouncing timer
+        lastDebounceTime = millis();
+        lastButtonState = reading; // remember what value we just saw
+    }
+
+    if ((millis() - lastDebounceTime) > debounceDelay) {
+        // whatever the reading is at, it's been there for longer than the debounce
+        // delay, so take it as the actual current state:
+        switchState = reading;
+    }
+
+    return switchState;
 }
