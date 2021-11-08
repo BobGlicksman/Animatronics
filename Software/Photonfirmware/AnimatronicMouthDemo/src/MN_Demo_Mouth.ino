@@ -48,8 +48,9 @@
  * Author: Bob Glicksman, Jim Schrempp, Team Practical Projects
  * (c) 2021, Team practical projects.  All rights reserved.
  * Released under open source, non-commercial license.
- * Date: 4/20/21
+ * Date: 11/8/21
  * 
+ * version 1.1: changed motuh open and closed limit constants for demo hardware
  * version 1.0: initial release; full capability
  * version 0.2: implemented and tested button state machine. Need to add pause state.
  * version 0.1: code is tested but needs pause button to be implemented.
@@ -78,7 +79,7 @@ const int EYES_SIGNAL_PIN = A5;
 
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
-const int MOUTH_CLOSED = 90;  // servo position for the mouth closed
+const int MOUTH_CLOSED = 120;  // servo position for the mouth closed
 const int MOUTH_OPENED = 105; // servo position for the wide open mouth
 const unsigned long BUSY_WAIT = 2000UL; // busy pin wait time = 2 second
 const unsigned long EYES_START_TIME = 1000UL; // time to eye sequence to start up
