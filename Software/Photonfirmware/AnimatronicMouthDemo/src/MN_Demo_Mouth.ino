@@ -48,8 +48,9 @@
  * Author: Bob Glicksman, Jim Schrempp, Team Practical Projects
  * (c) 2021, Team practical projects.  All rights reserved.
  * Released under open source, non-commercial license.
- * Date: 4/20/21
+ * Date: 11/8/21
  * 
+ * version 1.1: changed motuh open and closed limit constants for demo hardware
  * version 1.0: initial release; full capability
  * version 0.2: implemented and tested button state machine. Need to add pause state.
  * version 0.1: code is tested but needs pause button to be implemented.
