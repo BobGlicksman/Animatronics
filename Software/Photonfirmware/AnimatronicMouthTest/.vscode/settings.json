@@ -5,7 +5,7 @@
     "files.associations": {
         "*.ino": "cpp"
     },
-    "particle.targetDevice": "bg-dev01",
-    "particle.firmwareVersion": "2.0.1",
+    "particle.targetDevice": "Animatronic1",
+    "particle.firmwareVersion": "3.0.0",
     "particle.targetPlatform": "photon"
 }
