@@ -225,7 +225,17 @@ void loop() {
     
     case motionDetected:  // motion is detected, signal the eyes and wait
       if( (millis() - busyTime) >= EYES_START_TIME) {
-          clipPlay(welcome);  // play the welcome clip
+          //  XXX  play the one specified clip
+          //clipPlay(welcome);  // play the welcome clip
+
+          // randomly select the clip to play
+          //  welcome is played 3 out of 4 times, on the average
+          if( random(4) > 0) {
+            clipPlay(welcome);
+          } else {
+            clipPlay(pirate);
+          }
+
           busyTime = millis();    // reset the timer for the next state
           state = clipWaiting;  // transition to next state
       }
