@@ -88,8 +88,9 @@ int TPP_AnimateServo::moveTo (int newPos, float speed)  volatile{
     int estimatedMSToFinish = 0;
 
     // Set new destination and start time
-    destination_ = newPos;
+    startPosition_ = position_;
     timeStart_ = millis();
+    destination_ = newPos;
     lastDebugNeedsPrinting_ = true;
 
     // Will we count up or down?
@@ -139,9 +140,18 @@ void TPP_AnimateServo::process() volatile {
 
         //have we waited long enough to make a new position change?
         if (millis() - lastMoveMade_ > MS_BETWEEN_MOVES) {
+
+            // xxx
+            // the closer we get to destination, the slower we go
+            float howClosePct = distanceToGo / abs(startPosition_ - destination_);
+            howClosePct = map(howClosePct,0.0,100.0,0.0,100.0);
+            float thisIncrement = increment_ * howClosePct;
+            
+            logAniservo.trace("!ServoNum: %i, dtg: %d, inc: %.2f, thisinc: %.2f", 
+              servoNum_, distanceToGo, increment_, thisIncrement );
         
             // calculate new position
-            position_ += increment_;
+            position_ += thisIncrement; // increment_; // // // ; // //xxx   
 
             // don't overshoot the destination
             if (increment_ < 0) {

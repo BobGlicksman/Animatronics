@@ -54,7 +54,7 @@ class TPP_AnimateServo{
         
         // used for debugging
         volatile int timeStart_ = 0;         // time we started moving. Used for debug
-        volatile int startPosition_ = 0;     // position at the start of the move. Used for debug
+        volatile float startPosition_ = 0;     // position at the start of the move. Used for debug
         volatile bool lastDebugNeedsPrinting_ = true;// in debugging used to print a message when destination is reached
                                             // set to true when a new destination is set 
 
