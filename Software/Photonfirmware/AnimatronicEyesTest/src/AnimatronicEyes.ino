@@ -1,5 +1,5 @@
 /*
- * AnimatroicEyes 
+ * AnimatronicEyes 
  * Part of the animatronic exploration of Team Practical Projects
  * https://github.com/TeamPracticalProjects
  * 
@@ -14,6 +14,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2020 Bob Glicksman and Jim Schrempp
  * 
+ * v1.5 Added time of flight sensor
  * v1.4 Added kill switch to stop the eyes. Also changed wake up to be more realistic.
  * v1.3 Changed eye lid constants so that they are not coupled between left and right - now
  *      each lid has its own settings. 
@@ -28,7 +29,7 @@
  */ 
 
 
-const String version = "1.4";
+const String version = "1.5";
  
 //SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
@@ -37,8 +38,13 @@ SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer t
 #include <TPPAnimationList.h>
 #include <TPPAnimatePuppet.h>
 #include <eyeservosettings.h>
+#include <TPPTOF.h>
 
-//#define VERIFY_CALIBRATION_ONLY 
+// Only ONE of these, please
+#define TOF_USE 1
+#define VERIFY_CALIBRATION_ONLY 0
+
+
 #define DEBUGON
 #define TRIGGER_PIN A5
 #define KILL_BUTTON_PIN A4
@@ -68,7 +74,7 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 #define R_UPPERLID_SERVO 4
 #define R_LOWERLID_SERVO 5
 
-
+attentionPoints currentPoints;
 
 
 //------- midValue --------
@@ -145,6 +151,10 @@ void setup() {
     // Just show that the eye servo settings work
     sequenceCalibrationConfirmation();
 
+#elif TOF_USE
+
+    TOFinititialize();
+
 #else
 
     sequenceLookReal();
@@ -170,6 +180,26 @@ void loop() {
 
     // this is called every time to make the animation run
     animationTimerCallback();
+
+
+#ifdef TOF_USE
+    // this is called every time to allow TOF to make measurements
+    TOFsense();
+
+    TOFgetAttentionPoints(&currentPoints);
+    animation1.stopRunning();
+    animation1.clearSceneList();
+
+    //loop for each entry in currentPoints and set a scene to have the eyes look there.
+
+    animation1.addScene(sceneEyesAheadOpen, 0 , MOVE_SPEED_IMMEDIATE, 0);
+    animation1.addScene(sceneEyesLeftRight, 50, MOVE_SPEED_IMMEDIATE, 0);
+    animation1.addScene(sceneEyesUpDown, 50, MOVE_SPEED_IMMEDIATE, 0);
+
+    //now let the animation run
+    animation1.startRunning();
+
+#else
 
 #ifndef VERIFY_CALIBRATION_ONLY
 
@@ -292,7 +322,7 @@ void loop() {
     }
 
 #endif
-
+#endif
 
 
 }
