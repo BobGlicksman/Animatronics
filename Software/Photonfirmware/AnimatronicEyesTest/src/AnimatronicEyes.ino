@@ -38,12 +38,13 @@ SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer t
 #include <TPPAnimationList.h>
 #include <TPPAnimatePuppet.h>
 #include <eyeservosettings.h>
-#include <TPPTOF.h>
+#include <TPP_TOF.h>
 
 // Only ONE of these, please
 #define TOF_USE 1
-#define VERIFY_CALIBRATION_ONLY 0
+//#define VERIFY_CALIBRATION_ONLY 0
 
+TPP_TOF theTOF;
 
 #define DEBUGON
 #define TRIGGER_PIN A5
@@ -65,7 +66,6 @@ Logger mainLog("app.main");
 animationList animation1;  // When doing a programmed animation, this is the list of
                            // scenes and when they are to be played
 
-
 // Servo Numbers for the Servo Driver board
 #define X_SERVO 0
 #define Y_SERVO 1
@@ -73,9 +73,6 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 #define L_LOWERLID_SERVO 3
 #define R_UPPERLID_SERVO 4
 #define R_LOWERLID_SERVO 5
-
-attentionPoints currentPoints;
-
 
 //------- midValue --------
 // Pass in two ints and this returns the value in the middle of them.
@@ -153,7 +150,11 @@ void setup() {
 
 #elif TOF_USE
 
-    TOFinititialize();
+    // Time of Flight Sensor set up
+    Wire.begin(); //This resets to 100kHz I2C
+    Wire.setClock(400000); //Sensor has max I2C freq of 400kHz 
+    
+    theTOF.initTOF();
 
 #else
 
@@ -183,21 +184,64 @@ void loop() {
 
 
 #ifdef TOF_USE
-    // this is called every time to allow TOF to make measurements
-    TOFsense();
+    //int32_t smallestValue; 
+    int32_t focusX = -255;
+    int32_t focusY = -255;
+    static int32_t xPos = -1;
+    static int32_t yPos = -1;
+    static long lastEyeUpdateMS = 0;
 
-    TOFgetAttentionPoints(&currentPoints);
-    animation1.stopRunning();
-    animation1.clearSceneList();
+    //decide where to point the eyes
+    if (millis() - lastEyeUpdateMS > 100){
 
-    //loop for each entry in currentPoints and set a scene to have the eyes look there.
+        // this is called every time to allow TOF to make measurements
+        pointOfInterest thisPOI;
 
-    animation1.addScene(sceneEyesAheadOpen, 0 , MOVE_SPEED_IMMEDIATE, 0);
-    animation1.addScene(sceneEyesLeftRight, 50, MOVE_SPEED_IMMEDIATE, 0);
-    animation1.addScene(sceneEyesUpDown, 50, MOVE_SPEED_IMMEDIATE, 0);
+        theTOF.getPOI(&thisPOI);
+        focusX = thisPOI.x;
+        focusY = thisPOI.y;
+        //smallestValue = thisPOI.distanceMM;
 
-    //now let the animation run
-    animation1.startRunning();
+        // do we have a focus point?
+        if ((focusX >= 0) && (focusY >= 0)) {
+
+            lastEyeUpdateMS = millis();
+
+            int xPosNew = map(focusX,0,7, 20,80);   
+            int yPosNew = map(focusY,0,7, 80,20);
+            
+            // has the focus changed?
+            if ((xPosNew != xPos) || (yPosNew != yPos)) {
+
+                xPos = xPosNew;
+                yPos = yPosNew;
+
+                //mainLog.info("New position: x: %d, y: %d",focusX,focusY);
+
+                animation1.stopRunning();
+                animation1.clearSceneList();
+                animation1.addScene(sceneEyesOpen, 100 , MOVE_SPEED_FAST, -1);
+                animation1.addScene(sceneEyesLeftRight, xPos, MOVE_SPEED_FAST, -1);
+                animation1.addScene(sceneEyesUpDown, yPos, MOVE_SPEED_FAST, 0);
+
+                //now let the animation run
+                animation1.startRunning();
+            }
+        } 
+    }
+
+    // If the POI has not changed, then go to sleep
+    if (millis() - lastEyeUpdateMS > 2000){
+
+        lastEyeUpdateMS = millis();
+
+        animation1.stopRunning();
+        animation1.clearSceneList();
+        animation1.addScene(sceneEyesOpen, 0 , MOVE_SPEED_IMMEDIATE, 0);
+        
+        //now let the animation run
+        animation1.startRunning();
+    }
 
 #else
 
@@ -325,7 +369,7 @@ void loop() {
 #endif
 
 
-}
+} // end of main loop
 
 void sequenceCalibrationConfirmation() {
 
