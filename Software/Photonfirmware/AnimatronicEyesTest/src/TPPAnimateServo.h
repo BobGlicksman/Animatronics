@@ -26,6 +26,7 @@
 #include <Adafruit_PWMServoDriver.h>
 
 #define MOVE_SPEED_SLOW 1
+#define MOVE_SPEED_MEDIUM 5
 #define MOVE_SPEED_FAST 10
 #define MOVE_SPEED_IMMEDIATE 100
 

@@ -79,7 +79,8 @@ const int EYES_SIGNAL_PIN = A5;
 
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
-const int MOUTH_CLOSED = 115;  // servo position for the mouth closed
+
+const int MOUTH_CLOSED = 120;  // servo position for the mouth closed
 const int MOUTH_OPENED = 105; // servo position for the wide open mouth
 const unsigned long BUSY_WAIT = 2000UL; // busy pin wait time = 2 second
 const unsigned long EYES_START_TIME = 1000UL; // time to eye sequence to start up
@@ -107,7 +108,7 @@ struct ClipData {
 };
 
 // define some clips
-ClipData welcome {"11", "23", "1", "1", "2500", "0"};
+ClipData welcome {"1", "23", "1", "1", "2500", "0"};
 ClipData pirate {"12", "23", "1", "1", "3000", "0"};
 ClipData walkAway {"13", "23", "1", "1", "3000", "0"};
 
