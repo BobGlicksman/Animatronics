@@ -14,8 +14,8 @@
  *    
  */ 
 
-#define SETTINGS_JIMS
-//#define SETTINGS_BOBG
+//#define SETTINGS_JIMS
+#define SETTINGS_BOBG
 
 
 // Servo Positions
@@ -46,6 +46,30 @@
 
   #define RIGHT_LOWER_CLOSED 509
   #define RIGHT_LOWER_OPEN 256
+
+#endif
+
+#ifdef SETTINGS_BOBG
+
+#define X_POS_MID 473
+#define X_POS_LEFT_OFFSET -112
+#define X_POS_RIGHT_OFFSET 135
+
+#define Y_POS_MID 342
+#define Y_POS_UP_OFFSET 106
+#define Y_POS_DOWN_OFFSET -70
+
+#define LEFT_UPPER_CLOSED 436
+#define LEFT_UPPER_OPEN 252
+
+#define LEFT_LOWER_CLOSED 272
+#define LEFT_LOWER_OPEN 444
+
+#define RIGHT_UPPER_CLOSED 360
+#define RIGHT_UPPER_OPEN 534
+
+#define RIGHT_LOWER_CLOSED 516
+#define RIGHT_LOWER_OPEN 347
 
 #endif
 
