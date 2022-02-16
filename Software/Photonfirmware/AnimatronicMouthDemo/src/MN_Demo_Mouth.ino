@@ -165,6 +165,7 @@ void setup() {
   Particle.variable("max envelope value", maxFound);
   Particle.variable("min envelope value", minFound);
   Particle.function("mouth_event", newMouthEvent);    // this is for testing putposes
+  //Particle.subscribe("TOF_event", newMouthEvent);   // this will respond to published event from the eyes code
 
   // clear out the new event detection flag
   newDetectionFlag = false;
