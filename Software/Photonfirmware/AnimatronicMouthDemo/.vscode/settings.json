@@ -6,6 +6,6 @@
         "*.ino": "cpp"
     },
     "particle.targetDevice": "Animatronic1",
-    "particle.firmwareVersion": "3.0.0",
+    "particle.firmwareVersion": "3.1.0",
     "particle.targetPlatform": "photon"
 }

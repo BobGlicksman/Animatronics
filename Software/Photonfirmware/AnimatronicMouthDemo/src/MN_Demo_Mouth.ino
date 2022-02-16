@@ -74,8 +74,6 @@ const int GREEN_LED_PIN = D6;
 const int BUTTON_PIN = A3;
 const int LED_PIN = D7;
 const int ANALOG_ENV_INPUT = A0;
-const int PIR_PIN = A4;
-const int EYES_SIGNAL_PIN = A5;
 
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
@@ -95,6 +93,17 @@ int nlProcess = 0;  // 0 for skip non linear processing, 1 for sqrt processing, 
 // cloud variables to report statistics
 int maxFound = 0; // the maximum analog value found in the data set
 int minFound = 4095; // the minimum analog value found in the data set
+
+// define enumerated events reported from the eyes code
+enum TOF_detect {
+  Person_entered_fov = 1,   // empty FOV goes to a valid detection in any zone
+  Person_left_fov = 2,      // valid detection in any zone goes to empty FOV
+  Person_too_Close = 3      // smallest distance is < TOO_CLOSE mm
+};
+
+// global variables for eyes event processing
+TOF_detect statusChange;    // the new status from the eyes code
+bool newDetectionFlag;      // indication that a new event came in from the eyes code
 
 // structure definition for clip data
 struct ClipData {
@@ -140,6 +149,14 @@ void clipPlay(ClipData thisClip) {
   clipNum(thisClip.clipNumber);
 }  // end of clipPlay()
 
+// function to process a new event from the eyes code
+int newMouthEvent(String detection) {
+  int ordinalDetection = detection.toInt();
+  statusChange = (TOF_detect)ordinalDetection;
+  newDetectionFlag = true;
+  return ordinalDetection;
+}
+
 void setup() {
   // set up Photon pins
   pinMode(BUSY_PIN, INPUT);
@@ -147,8 +164,6 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
-  pinMode(PIR_PIN, INPUT);
-  pinMode(EYES_SIGNAL_PIN, OUTPUT);
 
   // register Particle Cloud functions and variables
   Particle.function("clip number", clipNum);
@@ -159,6 +174,10 @@ void setup() {
   Particle.function("analog input min", analogMin);
   Particle.variable("max envelope value", maxFound);
   Particle.variable("min envelope value", minFound);
+  Particle.function("mouth_event", newMouthEvent);    // this is for testing putposes
+
+  // clear out the new event detection flag
+  newDetectionFlag = false;
 
   // set up the mini MP3 player
   Serial1.begin(9600);
@@ -166,9 +185,6 @@ void setup() {
 
   // set up the mouth servo
   mouthServo.attach(SERVO_PIN);
-
-  // unassert the eyes signal
-  digitalWrite(EYES_SIGNAL_PIN, LOW);
 
   // blink and turn on the D7 LED on to indicate that the device is ready
   digitalWrite(LED_PIN, HIGH);
@@ -208,11 +224,10 @@ void loop() {
 
   // state machine to signal the eyes, play the clip and move the mouth
   switch (state) {
-    case idle:  // wait for the PIR to assert
+    case idle:  // wait for new event from the eyes
       if(digitalRead(BUSY_PIN) == HIGH) { // make sure mini MP3 is ready
-        // check the PIR; if triggered, play welcome clip
-        if(digitalRead(PIR_PIN) == HIGH) {
-          digitalWrite(EYES_SIGNAL_PIN, HIGH);  // signal the eyes that motion occurred
+        // check the new event flag for an event from the eyes code
+        if(newDetectionFlag == true) {
           digitalWrite(GREEN_LED_PIN, HIGH);    // visual indication of motion    
           busyTime = millis();    // update timer time
           state = motionDetected; // transition to the next state
@@ -225,19 +240,22 @@ void loop() {
     
     case motionDetected:  // motion is detected, signal the eyes and wait
       if( (millis() - busyTime) >= EYES_START_TIME) {
-          //  XXX  play the one specified clip
-          //clipPlay(welcome);  // play the welcome clip
-
-          // randomly select the clip to play
-          //  welcome is played 3 out of 4 times, on the average
-          if( random(4) > 0) {
+        // play the  specified clip
+        switch(statusChange) {
+          case Person_entered_fov:
             clipPlay(welcome);
-          } else {
-            clipPlay(pirate);
-          }
-
-          busyTime = millis();    // reset the timer for the next state
-          state = clipWaiting;  // transition to next state
+            break;
+          case Person_left_fov:
+            clipPlay(walkAway);
+            break;
+          case Person_too_Close:
+            clipPlay(pirate);   // replace this with a too-close clip
+            break;
+          
+        }
+        newDetectionFlag = false;
+        busyTime = millis();    // reset the timer for the next state
+        state = clipWaiting;  // transition to next state
       }
       else {
         state = motionDetected; // stay in present state
@@ -266,7 +284,6 @@ void loop() {
 
     case clipComplete:  // clip has finished, keep eyes going a little longer
       if( (millis() - busyTime) >= EYES_COMPLETE_TIME) {
-        digitalWrite(EYES_SIGNAL_PIN, LOW); // tell eyes that we are done
         digitalWrite(GREEN_LED_PIN, LOW); // reset indicator
         state = clipEnd;  // transition to next state, don't update the timer!
       }
@@ -277,7 +294,7 @@ void loop() {
 
     case clipEnd:   // just make sure busy pin has been unasserted long enough
       // test that busy pin is unasserted long enough and PIR is unasserted so don't retrigger
-      if( ((millis() - busyTime) >= BUSY_WAIT) && (digitalRead(PIR_PIN) == LOW) ) {  
+      if( (millis() - busyTime) >= BUSY_WAIT ) {  
           if(buttonToggle == false) { // no pause state indicated
             state = idle;
           }
@@ -305,9 +322,6 @@ void loop() {
   }
 
 } // end of loop()
-
-
-
 
 void speak() {
   static unsigned long lastSampleTime = millis();
