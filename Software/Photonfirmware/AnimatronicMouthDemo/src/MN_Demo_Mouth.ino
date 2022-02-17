@@ -148,7 +148,13 @@ void tofHandler(String event, String eventData) {
 int newMouthEvent(String detection) {
   int ordinalDetection = detection.toInt();
   statusChange = (TOF_detect)ordinalDetection;
-  newDetectionFlag = true;
+
+  // make sure we got a valid enumerated value or else don't set the newDetectionFlag
+  if( (statusChange == Person_entered_fov) || (statusChange == Person_left_fov) || (statusChange == Person_too_close) ) {
+    newDetectionFlag = true;
+  } else {
+    newDetectionFlag = false;
+  }
   return ordinalDetection;
 }
 
