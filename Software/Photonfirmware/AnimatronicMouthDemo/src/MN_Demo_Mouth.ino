@@ -88,7 +88,7 @@ int minFound = 4095; // the minimum analog value found in the data set
 enum TOF_detect {
   Person_entered_fov = 1,   // empty FOV goes to a valid detection in any zone
   Person_left_fov = 2,      // valid detection in any zone goes to empty FOV
-  Person_too_Close = 3      // smallest distance is < TOO_CLOSE mm
+  Person_too_close = 3      // smallest distance is < TOO_CLOSE mm
 };
 
 // global variables for eyes event processing
@@ -239,7 +239,7 @@ void loop() {
           case Person_left_fov:
             clipPlay(walkAway);
             break;
-          case Person_too_Close:
+          case Person_too_close:
             clipPlay(pirate);   // replace this with a too-close clip
             break;
           
