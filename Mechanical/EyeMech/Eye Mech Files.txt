@@ -1,0 +1,14 @@
+Robotic head eye mechanism
+
+We used this mechanism
+
+https://www.instructables.com/Simplified-3D-Printed-Animatronic-Dual-Eye-Mechani/
+
+Mesh files for all the components are there.
+
+The maker, Will Cogley, is incredibly inventive. His YouTube channel has a lot of amazing things: 
+
+https://www.youtube.com/channel/UCkUD_8b1JoTL2ipOVtxfNKw
+
+We modified a few of the eye mechanism parts, and they are found in the repository folder that holds this document.
+
