@@ -86,25 +86,26 @@ const int LED_ONBOARD = D7;      // the number of the LED pin
 */
 // -------------------------------------------------------------------
    
-  #define X_POS_MID 400
-  #define X_POS_LEFT_OFFSET 141
-  #define X_POS_RIGHT_OFFSET -121
+#define X_POS_MID 471
+#define X_POS_LEFT_OFFSET 92
+#define X_POS_RIGHT_OFFSET -50
 
-  #define Y_POS_MID 407
-  #define Y_POS_UP_OFFSET 98
-  #define Y_POS_DOWN_OFFSET -82
+#define Y_POS_MID 365
+#define Y_POS_UP_OFFSET 113
+#define Y_POS_DOWN_OFFSET -106
 
-  #define LEFT_UPPER_CLOSED 486
-  #define LEFT_UPPER_OPEN 287
+#define LEFT_UPPER_CLOSED 428
+#define LEFT_UPPER_OPEN 260
 
-  #define LEFT_LOWER_CLOSED 258
-  #define LEFT_LOWER_OPEN 450
+#define LEFT_LOWER_CLOSED 263
+#define LEFT_LOWER_OPEN 423
 
-  #define RIGHT_UPPER_CLOSED 261
-  #define RIGHT_UPPER_OPEN 469
+#define RIGHT_UPPER_CLOSED 385
+#define RIGHT_UPPER_OPEN 548
 
-  #define RIGHT_LOWER_CLOSED 509
-  #define RIGHT_LOWER_OPEN 256
+#define RIGHT_LOWER_CLOSED 557
+#define RIGHT_LOWER_OPEN 388
+
   
 // -------------------------------------------------------------------
 // -------------------------------------------------------------------
