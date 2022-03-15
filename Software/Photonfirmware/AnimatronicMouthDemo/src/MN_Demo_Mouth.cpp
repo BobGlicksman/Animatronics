@@ -1,3 +1,9 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
+
+#include "Particle.h"
+#line 1 "c:/Users/bobg5/Documents/GitHub/Animatronics/Software/Photonfirmware/AnimatronicMouthDemo/src/MN_Demo_Mouth.ino"
 /*
  * Project MN_Demo_Mouth
  * Description: This Photon software supports a demo at Maker Nexus.  It uses the 
@@ -51,6 +57,20 @@
 #include <math.h>
 
 // create an instance of the mini MP3 player
+void tofHandler(String event, String eventData);
+int newMouthEvent(String detection);
+void setup();
+void loop();
+void speak();
+int clipNum(String playClip);
+int clipVolume(String volume);
+int samples(String numberSamples);
+int analogMax(String theMax);
+int analogMin(String theMin);
+unsigned int nlScale(unsigned int dataToScale);
+int nlp(String processType);
+bool buttonPressed();
+#line 54 "c:/Users/bobg5/Documents/GitHub/Animatronics/Software/Photonfirmware/AnimatronicMouthDemo/src/MN_Demo_Mouth.ino"
 DFRobotDFPlayerMini miniMP3Player;
 
 // create an instance of the servo
