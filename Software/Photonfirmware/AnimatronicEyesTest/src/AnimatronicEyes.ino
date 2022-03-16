@@ -1,5 +1,5 @@
 /*
- * AnimatroicEyes 
+ * AnimatronicEyes 
  * Part of the animatronic exploration of Team Practical Projects
  * https://github.com/TeamPracticalProjects
  * 
@@ -14,6 +14,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2020 Bob Glicksman and Jim Schrempp
  * 
+ * v1.5 Added time of flight sensor
  * v1.4 Added kill switch to stop the eyes. Also changed wake up to be more realistic.
  * v1.3 Changed eye lid constants so that they are not coupled between left and right - now
  *      each lid has its own settings. 
@@ -28,7 +29,7 @@
  */ 
 
 
-const String version = "1.4";
+const String version = "1.5";
  
 //SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
@@ -37,8 +38,14 @@ SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer t
 #include <TPPAnimationList.h>
 #include <TPPAnimatePuppet.h>
 #include <eyeservosettings.h>
+#include <TPP_TOF.h>
 
-//#define VERIFY_CALIBRATION_ONLY 
+// Only ONE of these, please
+#define TOF_USE 1
+//#define VERIFY_CALIBRATION_ONLY 0
+
+TPP_TOF theTOF;
+
 #define DEBUGON
 #define TRIGGER_PIN A5
 #define KILL_BUTTON_PIN A4
@@ -59,7 +66,6 @@ Logger mainLog("app.main");
 animationList animation1;  // When doing a programmed animation, this is the list of
                            // scenes and when they are to be played
 
-
 // Servo Numbers for the Servo Driver board
 #define X_SERVO 0
 #define Y_SERVO 1
@@ -67,9 +73,6 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 #define L_LOWERLID_SERVO 3
 #define R_UPPERLID_SERVO 4
 #define R_LOWERLID_SERVO 5
-
-
-
 
 //------- midValue --------
 // Pass in two ints and this returns the value in the middle of them.
@@ -145,6 +148,14 @@ void setup() {
     // Just show that the eye servo settings work
     sequenceCalibrationConfirmation();
 
+#elif TOF_USE
+
+    // Time of Flight Sensor set up
+    Wire.begin(); //This resets to 100kHz I2C
+    Wire.setClock(400000); //Sensor has max I2C freq of 400kHz 
+    
+    theTOF.initTOF();
+
 #else
 
     sequenceLookReal();
@@ -170,6 +181,69 @@ void loop() {
 
     // this is called every time to make the animation run
     animationTimerCallback();
+
+
+#ifdef TOF_USE
+    //int32_t smallestValue; 
+    int32_t focusX = -255;
+    int32_t focusY = -255;
+    static int32_t xPos = -1;
+    static int32_t yPos = -1;
+    static long lastEyeUpdateMS = 0;
+
+    //decide where to point the eyes
+    if (millis() - lastEyeUpdateMS > 100){
+
+        // this is called every time to allow TOF to make measurements
+        pointOfInterest thisPOI;
+
+        theTOF.getPOI(&thisPOI);
+        focusX = thisPOI.x;
+        focusY = thisPOI.y;
+        //smallestValue = thisPOI.distanceMM;
+
+        // do we have a focus point?
+        if ((focusX >= 0) && (focusY >= 0)) {
+
+            lastEyeUpdateMS = millis();
+
+            int xPosNew = map(focusX,0,7, 20,80);   
+            int yPosNew = map(focusY,0,7, 80,20);
+            
+            // has the focus changed?
+            if ((xPosNew != xPos) || (yPosNew != yPos)) {
+
+                xPos = xPosNew;
+                yPos = yPosNew;
+
+                //mainLog.info("New position: x: %d, y: %d",focusX,focusY);
+
+                animation1.stopRunning();
+                animation1.clearSceneList();
+                animation1.addScene(sceneEyesOpen, 100 , MOVE_SPEED_FAST, -1);
+                animation1.addScene(sceneEyesLeftRight, xPos, MOVE_SPEED_FAST, -1);
+                animation1.addScene(sceneEyesUpDown, yPos, MOVE_SPEED_FAST, 0);
+
+                //now let the animation run
+                animation1.startRunning();
+            }
+        } 
+    }
+
+    // If the POI has not changed, then go to sleep
+    if (millis() - lastEyeUpdateMS > 2000){
+
+        lastEyeUpdateMS = millis();
+
+        animation1.stopRunning();
+        animation1.clearSceneList();
+        animation1.addScene(sceneEyesOpen, 0 , MOVE_SPEED_IMMEDIATE, 0);
+        
+        //now let the animation run
+        animation1.startRunning();
+    }
+
+#else
 
 #ifndef VERIFY_CALIBRATION_ONLY
 
@@ -292,10 +366,10 @@ void loop() {
     }
 
 #endif
+#endif
 
 
-
-}
+} // end of main loop
 
 void sequenceCalibrationConfirmation() {
 
