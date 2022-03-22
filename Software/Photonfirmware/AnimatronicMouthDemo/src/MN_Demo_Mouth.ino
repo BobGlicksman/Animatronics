@@ -107,7 +107,7 @@ struct ClipData {
 };
 
 // define some clips
-ClipData welcome {"1", "23", "1", "1", "2500", "0"};
+ClipData welcome {"11", "23", "1", "1", "2500", "0"};
 ClipData pirate {"12", "23", "1", "1", "3000", "0"};
 ClipData walkAway {"13", "23", "1", "1", "3000", "0"};
 
