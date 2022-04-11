@@ -156,12 +156,17 @@ void setup() {
     
     theTOF.initTOF();
 
+    sequenceCalibrationConfirmation();
+    animation1.startRunning();
+
 #else
 
     sequenceLookReal();
     sequenceAsleep(1000);
 
 #endif
+
+
     
 }
 
@@ -169,30 +174,40 @@ void setup() {
 void loop() {
 
     static bool firstLoop = true;
+    static bool startingUp = true;
     static bool mouthTriggered = false;
     static long lastIdleSequenceStartTime = 0;
 
     if (firstLoop){
 
         firstLoop = false;
-        mainLog.info("eyes start up");
+        mainLog.info("first time in main loop");
 
     }
 
     // this is called every time to make the animation run
     animationTimerCallback();
 
+    if (startingUp) {
+        // keep coming here until start up sequence is done
+        if (!animation1.isRunning()) {
+            startingUp = false;
+            mainLog.info("finished start up sequence");
+        }
+        return;
+    }
+
 
 #ifdef TOF_USE
     //int32_t smallestValue; 
-    int32_t focusX = -255;
+    int32_t focusX = -255;  //sensor coordinates
     int32_t focusY = -255;
     static int32_t xPos = -1;
     static int32_t yPos = -1;
     static long lastEyeUpdateMS = 0;
 
     //decide where to point the eyes
-    if (millis() - lastEyeUpdateMS > 100){
+    if (millis() - lastEyeUpdateMS > 10){
 
         // this is called every time to allow TOF to make measurements
         pointOfInterest thisPOI;
@@ -207,8 +222,8 @@ void loop() {
 
             lastEyeUpdateMS = millis();
 
-            int xPosNew = map(focusX,0,7, 20,80);   
-            int yPosNew = map(focusY,0,7, 80,20);
+            int xPosNew = map(focusX,0,7, 0,100);   
+            int yPosNew = map(focusY,0,7, 100,0);
             
             // has the focus changed?
             if ((xPosNew != xPos) || (yPosNew != yPos)) {
@@ -220,9 +235,9 @@ void loop() {
 
                 animation1.stopRunning();
                 animation1.clearSceneList();
-                animation1.addScene(sceneEyesOpen, 100 , MOVE_SPEED_FAST, -1);
-                animation1.addScene(sceneEyesLeftRight, xPos, MOVE_SPEED_FAST, -1);
-                animation1.addScene(sceneEyesUpDown, yPos, MOVE_SPEED_FAST, 0);
+                animation1.addScene(sceneEyesOpen, 100 , 10, -1);
+                animation1.addScene(sceneEyesLeftRight, xPos, 10, -1);
+                animation1.addScene(sceneEyesUpDown, yPos, 10, 0);
 
                 //now let the animation run
                 animation1.startRunning();
