@@ -14,6 +14,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2020 Bob Glicksman and Jim Schrempp
  * 
+ * v1.6 Exponential decay on the servo moves
  * v1.5 Added time of flight sensor
  * v1.4 Added kill switch to stop the eyes. Also changed wake up to be more realistic.
  * v1.3 Changed eye lid constants so that they are not coupled between left and right - now
@@ -207,7 +208,7 @@ void loop() {
     static long lastEyeUpdateMS = 0;
 
     //decide where to point the eyes
-    if (millis() - lastEyeUpdateMS > 10){
+    if (millis() - lastEyeUpdateMS > 1){
 
         // this is called every time to allow TOF to make measurements
         pointOfInterest thisPOI;
@@ -235,9 +236,9 @@ void loop() {
 
                 animation1.stopRunning();
                 animation1.clearSceneList();
-                animation1.addScene(sceneEyesOpen, 100 , 10, -1);
-                animation1.addScene(sceneEyesLeftRight, xPos, 10, -1);
-                animation1.addScene(sceneEyesUpDown, yPos, 10, 0);
+                animation1.addScene(sceneEyesOpen, 100 , MOVE_SPEED_IMMEDIATE, -1);
+                animation1.addScene(sceneEyesLeftRight, xPos, MOVE_SPEED_IMMEDIATE, -1);
+                animation1.addScene(sceneEyesUpDown, yPos, MOVE_SPEED_IMMEDIATE, 0);
 
                 //now let the animation run
                 animation1.startRunning();
@@ -388,11 +389,11 @@ void loop() {
 
 void sequenceCalibrationConfirmation() {
 
-    sequenceBlinkEyes(1000);
+    sequenceBlinkEyes(500);
     mainLog.info("CALIBRATION test: eyes ahead, open");
-    animation1.addScene(sceneEyesAheadOpen, -1, MOVE_SPEED_SLOW, 1000);
+    animation1.addScene(sceneEyesAheadOpen, -1, MOVE_SPEED_IMMEDIATE, 1000);
 
-    sequenceBlinkEyes(1000);
+    sequenceBlinkEyes(500);
 
     mainLog.info("CALIBRATION test: eyes right");
     animation1.addScene(sceneEyesLeftRight, EYES_RIGHT, MOVE_SPEED_SLOW, 1000);
@@ -401,7 +402,16 @@ void sequenceCalibrationConfirmation() {
     mainLog.info("CALIBRATION test: eyes x mid");
     animation1.addScene(sceneEyesLeftRight, EYES_X_MID, MOVE_SPEED_SLOW, 1000);
 
-    sequenceBlinkEyes(1000);
+    sequenceBlinkEyes(500);
+
+    mainLog.info("CALIBRATION test: eyes right");
+    animation1.addScene(sceneEyesLeftRight, EYES_RIGHT, MOVE_SPEED_FAST, 200);
+    mainLog.info("CALIBRATION test: eyes left");
+    animation1.addScene(sceneEyesLeftRight, EYES_LEFT, MOVE_SPEED_FAST, 200);
+    mainLog.info("CALIBRATION test: eyes x mid");
+    animation1.addScene(sceneEyesLeftRight, EYES_X_MID, MOVE_SPEED_FAST, 200);
+    
+    sequenceBlinkEyes(500);
     animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, 1000);
 
     mainLog.info("CALIBRATION test: eyes up");
@@ -411,11 +421,11 @@ void sequenceCalibrationConfirmation() {
     mainLog.info("CALIBRATION test: eyes y mid");
     animation1.addScene(sceneEyesUpDown, EYES_Y_MID, MOVE_SPEED_SLOW, 1000);
 
-    sequenceBlinkEyes(1000);
+    sequenceBlinkEyes(500);
     animation1.addScene(sceneEyesAhead, -1, MOVE_SPEED_SLOW, 1000);
 
-    sequenceBlinkEyes(1000);
-    sequenceBlinkEyes(1000);
+    sequenceBlinkEyes(200);
+    sequenceBlinkEyes(500);
 
 }
 
