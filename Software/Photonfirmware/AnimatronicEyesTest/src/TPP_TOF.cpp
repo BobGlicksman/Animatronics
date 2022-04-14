@@ -67,7 +67,7 @@ void TPP_TOF::initTOF(){
     // myImager.setTargetOrder(SF_VL53L5CX_TARGET_ORDER::CLOSEST);
     // myImager.setTargetOrder(SF_VL53L5CX_TARGET_ORDER::STRONGEST);
 
-    myImager.setRangingFrequency(4);
+    myImager.setRangingFrequency(16);
 
     myImager.startRanging();
 
