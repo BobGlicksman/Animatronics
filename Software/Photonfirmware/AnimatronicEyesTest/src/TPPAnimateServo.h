@@ -26,8 +26,9 @@
 #include <Adafruit_PWMServoDriver.h>
 
 #define MOVE_SPEED_SLOW 1
-#define MOVE_SPEED_FAST 10
-#define MOVE_SPEED_IMMEDIATE 100
+#define MOVE_SPEED_MEDIUM 8
+#define MOVE_SPEED_FAST 16
+#define MOVE_SPEED_IMMEDIATE 20
 
 #define SERVOMIN  140 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  520 // this is the 'maximum' pulse length count (out of 4096)
@@ -49,12 +50,12 @@ class TPP_AnimateServo{
         volatile int servoNum_ = 0;          // Number of this servo on the driver board 
         volatile float position_ = -1;       // the current position of the servo
         volatile int destination_ = 0;       // the position we are heading towards
-        volatile float increment_ = 1;       // increment we are using to get from position to destination
+        volatile float speed_ = 1;           // 1: immediate; 0.1: slow
         volatile int lastMoveMade_ = 0;      // time the last time we moved the servo position
         
         // used for debugging
         volatile int timeStart_ = 0;         // time we started moving. Used for debug
-        volatile int startPosition_ = 0;     // position at the start of the move. Used for debug
+        volatile float startPosition_ = 0;     // position at the start of the move. Used for debug
         volatile bool lastDebugNeedsPrinting_ = true;// in debugging used to print a message when destination is reached
                                             // set to true when a new destination is set 
 

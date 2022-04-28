@@ -78,38 +78,39 @@ void TPP_AnimateServo::begin(int servoNumIn, int positionIn) volatile {
 /*------- moveTo -------
  *  newPos: new position for the servo
  *  speed: the increment to use in each call to get to the new position 
- *     1 is slow, 10 is fast; 
- *     speed defines: MOVE_SPEED_SLOW 1, MOVE_SPEED_FAST 10, MOVE_SPEED_IMMEDIATE 100
+ *     1 is slow, 20 is immediate; 
  *  Returns the estimated milliseconds needed to get from the current position 
  *     to the new position.
  */
-int TPP_AnimateServo::moveTo (int newPos, float speed)  volatile{
+int TPP_AnimateServo::moveTo (int newPos, float newSpeed)  volatile{
 
     int estimatedMSToFinish = 0;
 
     // Set new destination and start time
-    destination_ = newPos;
+    startPosition_ = position_;
     timeStart_ = millis();
+    destination_ = newPos;
     lastDebugNeedsPrinting_ = true;
 
-    // Will we count up or down?
-    if (destination_ < position_) {
-        increment_ = -1 * speed; // count down
-    } else {
-        increment_ = speed; // count up
+    float speed_ = abs(newSpeed)/20;
+    if (speed_ > 1) { 
+        speed_ = 1; 
+    }
+    if (speed_ < 0.1) {
+        speed_ = 0.1;
     }
 
     // How long do we anticipate the move will take?
-    int totalDistance = floor(abs((destination_ - position_)));
-    int servoMoveMS = totalDistance;
+    int totalDistance = floor(abs(destination_ - position_));
+    int servoMoveMS = totalDistance;  // as fast as the servo can move, one increment per MS
 
-    int movesNeeded = totalDistance/speed + 1;
-    int movesMS = movesNeeded * MS_BETWEEN_MOVES + 20;
+    int movesNeeded = totalDistance/speed_ + 1;
+    int movesMS = (movesNeeded * MS_BETWEEN_MOVES)/4; // XXX just a guess of extra time due to our speed
 
     estimatedMSToFinish = (movesMS + servoMoveMS);
 
-    logAniservo.trace("MoveTo - ServoNum: %d, pos: %.1f, dest: %d, dist: %d inc: %.2f, movesNeeded: %d, estDur: %d", 
-              servoNum_, position_, destination_, totalDistance, increment_, movesNeeded, estimatedMSToFinish);
+    logAniservo.trace("MoveTo - ServoNum: %d, pos: %.1f, dest: %d, dist: %d speed: %.2f, movesNeeded: %d, estDur: %d", 
+              servoNum_, position_, destination_, totalDistance, speed_, movesNeeded, estimatedMSToFinish);
 
 
     return estimatedMSToFinish;
@@ -139,27 +140,19 @@ void TPP_AnimateServo::process() volatile {
 
         //have we waited long enough to make a new position change?
         if (millis() - lastMoveMade_ > MS_BETWEEN_MOVES) {
-        
-            // calculate new position
-            position_ += increment_;
 
-            // don't overshoot the destination
-            if (increment_ < 0) {
-                // we are counting down
-                if (position_ < destination_) {
-                    position_ = destination_;  
-                }
-            } else {
-                // we are counting up
-                if (position_ > destination_) {
-                    position_ = destination_; 
-                }
-            }
-            
+            // we move speed_ percent closer each time, 
+            // so exponential decay in how far servo travels each time
+            float howFarToMoveNow = (destination_ - position_) * speed_;
+            position_ +=  howFarToMoveNow;
+
             // Command the servo
             int newPosition = floor(position_);
             pwm_.setPWM (servoNum_, 0, newPosition);
             lastMoveMade_ = millis();
+
+            logAniservo.trace("!ServoNum: %i, dtg: %d, speed: %.2f, how far this time: %.2f", 
+              servoNum_, distanceToGo, speed_, howFarToMoveNow );
 
         }
 
@@ -186,10 +179,10 @@ void TPP_AnimateServo::process() volatile {
         //    the log object instead of Serial.print in a Timer call back.
         //    why doesn't this work?
 
-            logAniservo.trace("Arrived, ServoNum: %i, pos: %.2f, inc: %.2f, actDur: %d", 
-              servoNum_, position_, increment_, actualDuration );
-            logAniservo.trace("Summary, inc: %.2f , MS Per Move Unit: %.2f", 
-                increment_, MSPerMoveUnit);
+            logAniservo.trace("Arrived, ServoNum: %i, pos: %.2f, speed: %.2f, actDur: %d", 
+              servoNum_, position_, speed_, actualDuration );
+            logAniservo.trace("Summary, speed: %.2f , MS Per Move Unit: %.2f", 
+                speed_, MSPerMoveUnit);
 
         }
     }

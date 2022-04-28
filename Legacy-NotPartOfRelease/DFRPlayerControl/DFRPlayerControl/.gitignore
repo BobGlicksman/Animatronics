@@ -1,6 +1,6 @@
 *.pem
 *.bin
 *.der
-AnimatronicEyes.cpp
+src/DFRPlayerControl.cpp
 .vscode/*
 target/*

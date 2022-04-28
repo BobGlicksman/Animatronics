@@ -1,3 +1,9 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
+
+#include "Particle.h"
+#line 1 "c:/Users/bobg5/Documents/GitHub/Animatronics/Software/Photonfirmware/AnimatronicMouthDemo/src/MN_Demo_Mouth.ino"
 /*
  * Project MN_Demo_Mouth
  * Description: This Photon software supports a demo at Maker Nexus.  It uses the 
@@ -37,9 +43,8 @@
  * Author: Bob Glicksman, Jim Schrempp, Team Practical Projects
  * (c) 2021, Team practical projects.  All rights reserved.
  * Released under open source, non-commercial license.
- * Date: 4/28/2022
+ * Date: 2/16/2022
  * 
- * version 1.3: updated the event interface enum to the latest spec
  * version 1.2: changed from PIR signalling to event message from the eyes code
  * version 1.1: changed mouth open and closed limit constants for demo hardware
  * version 1.0: initial release; full capability
@@ -52,6 +57,20 @@
 #include <math.h>
 
 // create an instance of the mini MP3 player
+void tofHandler(String event, String eventData);
+int newMouthEvent(String detection);
+void setup();
+void loop();
+void speak();
+int clipNum(String playClip);
+int clipVolume(String volume);
+int samples(String numberSamples);
+int analogMax(String theMax);
+int analogMin(String theMin);
+unsigned int nlScale(unsigned int dataToScale);
+int nlp(String processType);
+bool buttonPressed();
+#line 54 "c:/Users/bobg5/Documents/GitHub/Animatronics/Software/Photonfirmware/AnimatronicMouthDemo/src/MN_Demo_Mouth.ino"
 DFRobotDFPlayerMini miniMP3Player;
 
 // create an instance of the servo
@@ -90,8 +109,7 @@ int minFound = 4095; // the minimum analog value found in the data set
 enum TOF_detect {
   Person_entered_fov = 1,   // empty FOV goes to a valid detection in any zone
   Person_left_fov = 2,      // valid detection in any zone goes to empty FOV
-  Person_too_close = 3,     // smallest distance is < TOO_CLOSE mm
-  Person_left_quickly = 4   // same as #2 but FOV was vacated in a short time period
+  Person_too_close = 3      // smallest distance is < TOO_CLOSE mm
 };
 
 // global variables for eyes event processing
@@ -112,8 +130,6 @@ struct ClipData {
 ClipData welcome {"11", "23", "1", "1", "2500", "0"};
 ClipData pirate {"12", "23", "1", "1", "3000", "0"};
 ClipData walkAway {"13", "23", "1", "1", "3000", "0"};
-ClipData backoff {"14", "23", "1", "1", "2500", "0"};
-ClipData thanks {"15", "23", "1", "1", "2000", "0"};
 
 // define enumerated state variable for loop() state machine
 enum StateVariable {
@@ -155,7 +171,7 @@ int newMouthEvent(String detection) {
   statusChange = (TOF_detect)ordinalDetection;
 
   // make sure we got a valid enumerated value or else don't set the newDetectionFlag
-  if( (statusChange == Person_entered_fov) || (statusChange == Person_left_fov) || (statusChange == Person_too_close) || (statusChange == Person_left_quickly)) {
+  if( (statusChange == Person_entered_fov) || (statusChange == Person_left_fov) || (statusChange == Person_too_close) ) {
     newDetectionFlag = true;
   } else {
     newDetectionFlag = false;
@@ -253,16 +269,10 @@ void loop() {
             clipPlay(welcome);
             break;
           case Person_left_fov:
-            clipPlay(thanks); // replace this with normal exit clip
-            break;
-          case Person_too_close:
-            clipPlay(backoff);   // replace this with a too-close clip
-            break;
-          case Person_left_quickly:
             clipPlay(walkAway);
             break;
-          default:
-            clipPlay(pirate);
+          case Person_too_close:
+            clipPlay(pirate);   // replace this with a too-close clip
             break;
           
         }
