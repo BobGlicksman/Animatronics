@@ -14,6 +14,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2020 Bob Glicksman and Jim Schrempp
  * 
+ * v1.7 add TOF event ptocessing
  * v1.6 Exponential decay on the servo moves
  * v1.5 Added time of flight sensor
  * v1.4 Added kill switch to stop the eyes. Also changed wake up to be more realistic.
@@ -74,6 +75,69 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 #define L_LOWERLID_SERVO 3
 #define R_UPPERLID_SERVO 4
 #define R_LOWERLID_SERVO 5
+
+//------------- XXX processEvents ------------------
+// evaluate the TOF sensor results to determine if a mouth event is to be published, and publish the resulting event
+void processEvents(int32_t xFocus, int32_t yFocus, int32_t distance) {
+    // event declaration
+    enum TOF_detect {
+        Person_entered_fov = 1,   // empty FOV goes to a valid detection in any zone
+        Person_left_fov = 2,      // valid detection in any zone goes to empty FOV
+        Person_too_close = 3,     // smallest distance is < TOO_CLOSE mm
+        Person_left_quickly = 4   // same as #2 but FOV was vacated in a short time period
+    };
+
+    // local constants
+    const unsigned int TOO_CLOSE = 254;  // object is too close if < 254 mm = 10"
+    const unsigned long LAST_TIME_TOO_CLOSE = 10000;    // time out for repeat of too close event - 10 seconds
+    const unsigned long TOO_SOON = 15000;   // 15 sec is the minimum time for a "valid" engagement
+    
+    // local variables
+    static bool eyesOpenLast = false;   // true of the eyes were open the last time through
+    static unsigned long timeEyesOpened = millis();
+    static unsigned long timeTooClose = 0;
+    String eventTypeAsString = "";
+
+    // test to see if the sensor detects a valid object in the fov
+    if ((xFocus >= 0) && (yFocus >= 0)) {       // valid object in fov
+        if(eyesOpenLast == false) {     // someone just entered the fov; send entered event
+            eyesOpenLast = true;    // log that eyes are open
+            timeEyesOpened = millis();
+            eventTypeAsString = String(Person_entered_fov);
+            Particle.publish("TOF_event", eventTypeAsString);
+            return;
+        }
+        else {      // someone is in the fov for a while, test for too close
+            if( (distance < TOO_CLOSE) && ((millis() - timeTooClose) > LAST_TIME_TOO_CLOSE) ) {
+                timeTooClose = millis();
+                eventTypeAsString = String(Person_too_close);
+                Particle.publish("TOF_event", eventTypeAsString);  
+                return;             
+            }
+        }
+    }
+    else {      //no valid object in fov
+        if(eyesOpenLast == true) {  // eyes just closed
+            eyesOpenLast = false;   // log that eyes are closed
+            if( (millis() - timeEyesOpened) > TOO_SOON) {   // person  in fov for a "decent" amount of time
+                eventTypeAsString = String(Person_left_fov);
+                Particle.publish("TOF_event", eventTypeAsString);  
+                return; 
+            }
+            else {      // person in fov for only a short time
+                eventTypeAsString = String(Person_left_quickly);
+                Particle.publish("TOF_event", eventTypeAsString);  
+                return;
+            }
+
+        }
+        return;
+    }
+    // if nothing to do, just return
+    return;
+
+}   // end of processEvents()
+
 
 //------- midValue --------
 // Pass in two ints and this returns the value in the middle of them.
@@ -217,6 +281,10 @@ void loop() {
         focusX = thisPOI.x;
         focusY = thisPOI.y;
         //smallestValue = thisPOI.distanceMM;
+
+        // XXXX call function to process the TOF data for event publication
+
+        processEvents(focusX, focusY, thisPOI.distanceMM);
 
         // do we have a focus point?
         if ((focusX >= 0) && (focusY >= 0)) {
