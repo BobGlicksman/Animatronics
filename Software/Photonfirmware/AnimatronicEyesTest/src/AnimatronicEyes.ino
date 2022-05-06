@@ -14,7 +14,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2020 Bob Glicksman and Jim Schrempp
  * 
- * v1.7 add TOF event ptocessing
+ * v1.7 add TOF event processing
  * v1.6 Exponential decay on the servo moves
  * v1.5 Added time of flight sensor
  * v1.4 Added kill switch to stop the eyes. Also changed wake up to be more realistic.
@@ -31,7 +31,7 @@
  */ 
 
 
-const String version = "1.5";
+const String version = "1.7";
  
 //SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
