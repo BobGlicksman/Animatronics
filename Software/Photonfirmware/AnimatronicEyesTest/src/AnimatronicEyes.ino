@@ -14,6 +14,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2020 Bob Glicksman and Jim Schrempp
  * 
+ * v1.8 changed the TOF upload time in loop to be longer (25 ms)
  * v1.7 add TOF event processing
  * v1.6 Exponential decay on the servo moves
  * v1.5 Added time of flight sensor
@@ -53,6 +54,7 @@ TPP_TOF theTOF;
 #define KILL_BUTTON_PIN A4
 
 const long IDLE_SEQUENCE_MIN_WAIT_MS = 10000; //30 sec // during idle times, random activity will happen longer than this
+const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't need to upload the TOF data very often
 
 SerialLogHandler logHandler1(LOG_LEVEL_INFO, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
     { "app.main", LOG_LEVEL_ALL }               // Logging for main loop
@@ -272,7 +274,7 @@ void loop() {
     static long lastEyeUpdateMS = 0;
 
     //decide where to point the eyes
-    if (millis() - lastEyeUpdateMS > 1){
+    if ( (millis() - lastEyeUpdateMS) > TOF_SAMPLE_TIME){    // XXX made this longet than 1 ms
 
         // this is called every time to allow TOF to make measurements
         pointOfInterest thisPOI;
