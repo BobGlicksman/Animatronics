@@ -32,7 +32,7 @@
  */ 
 
 
-const String version = "1.7";
+const String version = "1.8";
  
 //SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
@@ -274,7 +274,7 @@ void loop() {
     static long lastEyeUpdateMS = 0;
 
     //decide where to point the eyes
-    if ( (millis() - lastEyeUpdateMS) > TOF_SAMPLE_TIME){    // XXX made this longet than 1 ms
+    if ( (millis() - lastEyeUpdateMS) > TOF_SAMPLE_TIME){    // XXX made this longer than 1 ms
 
         // this is called every time to allow TOF to make measurements
         pointOfInterest thisPOI;
