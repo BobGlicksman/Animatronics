@@ -37,8 +37,9 @@
  * Author: Bob Glicksman, Jim Schrempp, Team Practical Projects
  * (c) 2021, Team practical projects.  All rights reserved.
  * Released under open source, non-commercial license.
- * Date: 4/28/2022
+ * Date: 5/28/2022
  * 
+ * version 1.4: added #define for Jim vs Bob
  * version 1.3: updated the event interface enum to the latest spec
  * version 1.2: changed from PIR signalling to event message from the eyes code
  * version 1.1: changed mouth open and closed limit constants for demo hardware
@@ -47,6 +48,9 @@
  * version 0.1: code is tested but needs pause button to be implemented.
  * 
  */
+
+//#define BOB_MOUTH
+#define JIM_MOUTH
 
 #include <DFRobotDFPlayerMini.h>
 #include <math.h>
@@ -69,8 +73,17 @@ const int ANALOG_ENV_INPUT = A0;
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
 
-const int MOUTH_CLOSED = 123;  // servo position for the mouth closed
-const int MOUTH_OPENED = 112; // servo position for the wide open mouth
+
+#ifdef BOB_MOUTH
+const int MOUTH_CLOSED = 123; //  servo position for the mouth closed
+const int MOUTH_OPENED = 112; //  servo position for the wide open mouth
+#endif
+
+#ifdef JIM_MOUTH
+const int MOUTH_CLOSED = 144;  //123; //  servo position for the mouth closed
+const int MOUTH_OPENED = 134; //112; //  servo position for the wide open mouth
+#endif
+
 const unsigned long BUSY_WAIT = 2000UL; // busy pin wait time = 2 second
 const unsigned long EYES_START_TIME = 1000UL; // time to eye sequence to start up
 const unsigned long EYES_COMPLETE_TIME = 1000UL;  // time to eye sequence to stop
