@@ -49,8 +49,8 @@
  * 
  */
 
-//#define BOB_MOUTH
-#define JIM_MOUTH
+#define BOB_MOUTH
+//#define JIM_MOUTH
 
 #include <DFRobotDFPlayerMini.h>
 #include <math.h>
