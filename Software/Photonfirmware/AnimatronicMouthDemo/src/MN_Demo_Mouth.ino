@@ -39,6 +39,8 @@
  * Released under open source, non-commercial license.
  * Date: 5/28/2022
  * 
+ * version 1.5: changed to .playMp3Folder. Audio files must now be in 
+ *     /MP3/  and begin with 4 digits: 0000   0003 etc
  * version 1.4: added #define for Jim vs Bob
  * version 1.3: updated the event interface enum to the latest spec
  * version 1.2: changed from PIR signalling to event message from the eyes code
@@ -417,7 +419,7 @@ int clipNum(String playClip) {
     maxFound = 0;
     minFound = 4095;
     // play the clip
-    miniMP3Player.play(clip);
+    miniMP3Player.playMp3Folder(clip);
     return clip;
 } // end of clipNum()
 
