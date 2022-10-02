@@ -3,3 +3,4 @@
 *.der
 .vscode/*
 target/*
+Software/Photonfirmware/AnimatronicMouthDemo/target/*
