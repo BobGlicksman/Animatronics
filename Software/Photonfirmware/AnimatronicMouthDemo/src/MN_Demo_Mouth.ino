@@ -51,8 +51,8 @@
  * 
  */
 
-#define BOB_MOUTH
-//#define JIM_MOUTH
+//#define BOB_MOUTH
+#define JIM_MOUTH
 
 #include <DFRobotDFPlayerMini.h>
 #include <math.h>
@@ -71,6 +71,8 @@ const int GREEN_LED_PIN = D6;
 const int BUTTON_PIN = A3;
 const int LED_PIN = D7;
 const int ANALOG_ENV_INPUT = A0;
+const int PERSONALITY_PIN0 = A4;
+const int PERSONALITY_PIN1 = A5;
 
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
@@ -103,6 +105,7 @@ int minFound = 4095; // the minimum analog value found in the data set
 
 // define enumerated events reported from the eyes code
 enum TOF_detect {
+    No_change_in_fov = 0,
     Person_entered_fov = 1,   // empty FOV goes to a valid detection in any zone
     Person_left_fov = 2,      // valid detection in any zone goes to empty FOV
     Person_too_close = 3,     // smallest distance is < TOO_CLOSE mm
@@ -112,6 +115,7 @@ enum TOF_detect {
 // global variables for eyes event processing
 TOF_detect statusChange;    // the new status from the eyes code
 bool newDetectionFlag;      // indication that a new event came in from the eyes code
+int mg_personalityNumber;   // 0-4 set by jumpers XX and XX on the board read as binary number
 
 // structure definition for clip data
 struct ClipData {
@@ -123,12 +127,87 @@ struct ClipData {
     String aMin;       // the smallest analog value to map to the servo lower limit
 };
 
+struct EventAudio {
+    int numClips;
+    ClipData clipdata[10]; // no more than 10 clips per TOF event
+} ;
+
+struct Personality {
+    EventAudio events[5]; // to match number of choises in events TOF_Detect enum
+} ;
+
+Personality personalities[2] = // one for each personality
+{
+    { // personality 0
+        {
+            { 0,    //  No_change_in_fov
+                { 
+                } 
+            },
+            { 1,    // Person_entered_fov
+                { {"11", "23", "1", "1", "2500", "0"}  // welcome
+                } 
+            },
+            { 1,    // Person_left_fov 
+                {{"15", "23", "1", "1", "2000", "0"}   // thanks for coming  
+                } 
+            },
+            { 1,    // Person_too_close
+                {{"14", "23", "1", "1", "2500", "0"}   // backoff you're too close
+                }  
+            },
+            { 1,    // Person_left_quickly
+                {{"13", "23", "1", "1", "3000", "0"}   // don't walk away when I'm talking to you
+                }  
+            } 
+        }
+
+    },
+    { // personality 1
+        {
+            { 5,    //  No_change_in_fov
+                {{"100", "23", "1", "1", "2500", "0"},  // Snoring
+                 {"101", "23", "1", "1", "2500", "0"},  // Daisy
+                 {"102", "23", "1", "1", "2500", "0"},  // Where's that pencil
+                 {"103", "23", "1", "1", "2500", "0"},  // Guess your weight
+                 {"104", "23", "1", "1", "2500", "0"},  // I'm lonely
+                } 
+            },
+            { 3,    // Person_entered_fov
+                {{"110", "23", "1", "1", "2500", "0"},  // Hello there
+                 {"111", "23", "1", "1", "2500", "0"},  // Nice to see you
+                 {"112", "23", "1", "1", "3000", "0"}   // Come a little closer
+                } 
+            },
+            { 3,    // Person_left_fov 
+                {{"120", "23", "1", "1", "2000", "0"},  // See you later
+                 {"121", "23", "1", "1", "2500", "0"},  // Come back again
+                 {"122", "23", "1", "1", "3000", "0"}   // Thanks for stopping by  
+                } 
+            },
+            { 2,    // Person_too_close
+                {{"130", "23", "1", "1", "2000", "0"},  // Take off my head
+                 {"131", "23", "1", "1", "2500", "0"}   // You're a little too close
+                }  
+            },
+            { 3,    // Person_left_quickly
+                {{"140", "23", "1", "1", "2000", "0"},  // Come back when you have time
+                 {"141", "23", "1", "1", "2500", "0"},  // Alright see you, can't be friends
+                 {"142", "23", "1", "1", "3000", "0"}   // Hey, where are you going  
+                }   
+            } 
+        }
+    }
+};
+
+/*
 // define some clips
 ClipData welcome {"11", "23", "1", "1", "2500", "0"};
 ClipData pirate {"12", "23", "1", "1", "3000", "0"};
 ClipData walkAway {"13", "23", "1", "1", "3000", "0"};
 ClipData backoff {"14", "23", "1", "1", "2500", "0"};
 ClipData thanks {"15", "23", "1", "1", "2000", "0"};
+*/
 
 // define enumerated state variable for loop() state machine
 enum StateVariable {
@@ -149,6 +228,8 @@ enum ButtonStates {
   releasedTentative  // button seems to be released, need verificaton
 };
 
+
+
 //function to set up the data and playback a clip
 void clipPlay(ClipData thisClip) {
     analogMin(thisClip.aMin);
@@ -158,6 +239,16 @@ void clipPlay(ClipData thisClip) {
     clipVolume(thisClip.volume);
     clipNum(thisClip.clipNumber);
 }  // end of clipPlay()
+
+// pick a random clip to play from the choices we have
+void eventResponse(EventAudio audioClips) {
+    if (audioClips.numClips > 0) {
+        int clipToPlay = random(audioClips.numClips);
+        ClipData chosenClip = audioClips.clipdata[clipToPlay];
+        clipPlay(chosenClip);
+    };
+
+}
 
 // subscription handler for events from eyes code
 void tofHandler(String event, String eventData) {
@@ -185,6 +276,8 @@ void setup() {
     pinMode(LED_PIN, OUTPUT);
     pinMode(RED_LED_PIN, OUTPUT);
     pinMode(GREEN_LED_PIN, OUTPUT);
+    pinMode(PERSONALITY_PIN0, INPUT_PULLUP);
+    pinMode(PERSONALITY_PIN1, INPUT_PULLUP);
 
     // register Particle Cloud functions and variables
     Particle.function("clip number", clipNum);
@@ -222,12 +315,22 @@ void setup() {
     digitalWrite(LED_PIN, HIGH);
     mouthServo.write(MOUTH_CLOSED);
 
+    mg_personalityNumber = 0;  // default 
+
+
 } // end of setup()
 
 void loop() {
     static unsigned long busyTime = millis();
     static StateVariable state = idle;
     static bool buttonToggle = false;   // if set true, put demo in pause mode
+
+    // detect personality
+    int personality0 = digitalRead(PERSONALITY_PIN0);
+    int personality1 = digitalRead(PERSONALITY_PIN1);
+    if (personality0 == HIGH) {
+        mg_personalityNumber = 1;
+    }
 
     // refresh the analog sampling and processing the mouth movement continuously
     speak();
@@ -262,10 +365,12 @@ void loop() {
         
         case motionDetected:  // motion is detected, signal the eyes and wait
         if( (millis() - busyTime) >= EYES_START_TIME) {
+            eventResponse(personalities[mg_personalityNumber].events[statusChange]);
+            /*
             // play the  specified clip
             switch(statusChange) {
             case Person_entered_fov:
-                clipPlay(welcome);
+                eventResponse(personalities[mg_personalityNumber].events[statusChange]);
                 break;
             case Person_left_fov:
                 clipPlay(thanks); // replace this with normal exit clip
@@ -281,6 +386,7 @@ void loop() {
                 break;
             
             }
+            */
             newDetectionFlag = false;
             busyTime = millis();    // reset the timer for the next state
             state = clipWaiting;  // transition to next state
