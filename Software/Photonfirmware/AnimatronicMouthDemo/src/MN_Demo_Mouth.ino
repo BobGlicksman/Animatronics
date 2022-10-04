@@ -167,7 +167,6 @@ Personality personalities[2] = // one for each personality
         {
             { 5,    //  No_change_in_fov
                 {{"100", "23", "1", "1", "2500", "0"},  // Snoring
-                 {"101", "23", "1", "1", "2500", "0"},  // Daisy
                  {"102", "23", "1", "1", "2500", "0"},  // Where's that pencil
                  {"103", "23", "1", "1", "2500", "0"},  // Guess your weight
                  {"104", "23", "1", "1", "2500", "0"},  // I'm lonely
