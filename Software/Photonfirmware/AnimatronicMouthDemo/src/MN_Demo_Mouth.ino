@@ -338,8 +338,10 @@ void loop() {
 
     // detect personality
     int personality0 = digitalRead(PERSONALITY_PIN0);
-    int personality1 = digitalRead(PERSONALITY_PIN1);
+    // int personality1 = digitalRead(PERSONALITY_PIN1); // when we want to go to more than 2 personalities
     if (personality0 == HIGH) {
+        mg_personalityNumber = 0;
+    } else {
         mg_personalityNumber = 1;
     }
 
@@ -453,8 +455,8 @@ void loop() {
 // and move the mouth servo as needed
 void speak() {
     static unsigned long lastSampleTime = millis();
-    static unsigned int averagedData = 0;
-    static unsigned int numberAveragedPoints = 0;
+    static int averagedData = 0;
+    static int numberAveragedPoints = 0;
     static bool toggle = false;
     static bool wasPlaying = false;  // player state last time through this code
     int servoCommand;
