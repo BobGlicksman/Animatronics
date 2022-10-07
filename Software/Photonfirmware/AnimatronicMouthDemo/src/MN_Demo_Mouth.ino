@@ -171,7 +171,7 @@ Personality personalities[2] = // one for each personality
     },
     { // personality 1
         {
-            { 5,    //  No_change_in_fov
+            { 4,    //  No_change_in_fov
                 {{"100", "30", "1", "1", "2500", "0"},  // Snoring
                  {"102", "30", "1", "1", "2500", "0"},  // Where's that pencil
                  {"103", "30", "1", "1", "2500", "0"},  // Guess your weight
@@ -255,7 +255,9 @@ void moveMouth(int position) {
 // Cloud function to set mouth position
 int PFmouthPosition(String data) {
     int position = data.toInt();
-    moveMouth(position);
+    if (position != 0) {
+        moveMouth(position);
+    }
     return mg_mouthPosition;
 
 }
