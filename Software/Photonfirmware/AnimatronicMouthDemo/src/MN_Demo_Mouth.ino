@@ -88,8 +88,8 @@ const int MOUTH_OPENED = 112; //  servo position for the wide open mouth
 #endif
 
 #ifdef JIM_MOUTH
-const int MOUTH_CLOSED = 152;  //123; //  servo position for the mouth closed
-const int MOUTH_OPENED = 145; //112; //  servo position for the wide open mouth
+const int MOUTH_CLOSED = 152;  //  servo position for the mouth closed
+const int MOUTH_OPENED = 145;  //  servo position for the wide open mouth
 #endif
 
 const unsigned long BUSY_WAIT = 2000UL; // busy pin wait time = 2 second
@@ -142,7 +142,7 @@ struct Personality {
     EventAudio events[NUM_EVENTS]; // to match number of choises in events TOF_Detect enum
 } ;
 
-Personality personalities[2] = // one for each personality
+const Personality personalities[2] = // one for each personality
 {
     { // personality 0
         {
@@ -172,33 +172,33 @@ Personality personalities[2] = // one for each personality
     { // personality 1
         {
             { 4,    //  No_change_in_fov
-                {{"100", "30", "1", "1", "2500", "0"},  // Snoring
-                 {"102", "30", "1", "1", "2500", "0"},  // Where's that pencil
-                 {"103", "30", "1", "1", "2500", "0"},  // Guess your weight
-                 {"104", "30", "1", "1", "2500", "0"},  // I'm lonely
+                {{"100", "25", "0", "1", "3700", "0"},  // Snoring
+                 {"102", "25", "0", "1", "3500", "0"},  // Where's that pencil
+                 {"103", "25", "0", "1", "3600", "0"},  // Guess your weight
+                 {"104", "25", "0", "1", "3300", "0"},  // I'm lonely
                 } 
             },
             { 3,    // Person_entered_fov
-                {{"110", "30", "1", "1", "2500", "0"},  // Hello there
-                 {"111", "30", "1", "1", "2500", "0"},  // Nice to see you
-                 {"112", "30", "1", "1", "3000", "0"}   // Come a little closer
+                {{"110", "26", "0", "1", "3700", "0"},  // Hello there
+                 {"111", "28", "0", "1", "3600", "0"},  // Nice to see you
+                 {"112", "27", "0", "1", "3600", "0"}   // Come a little closer
                 } 
             },
             { 3,    // Person_left_fov 
-                {{"120", "30", "1", "1", "2000", "0"},  // See you later
-                 {"121", "30", "1", "1", "2500", "0"},  // Come back again
-                 {"122", "30", "1", "1", "3000", "0"}   // Thanks for stopping by  
+                {{"120", "27", "0", "1", "3300", "0"},  // See you later
+                 {"121", "27", "0", "1", "3700", "0"},  // Come back again
+                 {"122", "26", "0", "1", "3700", "0"}   // Thanks for stopping by  
                 } 
             },
             { 2,    // Person_too_close
-                {{"130", "30", "1", "1", "2000", "0"},  // Take off my head
-                 {"131", "30", "1", "1", "2500", "0"}   // You're a little too close
+                {{"130", "27", "0", "1", "3800", "0"},  // Take off my head
+                 {"131", "28", "0", "1", "3500", "0"}   // You're a little too close
                 }  
             },
             { 3,    // Person_left_quickly
-                {{"140", "30", "1", "1", "2000", "0"},  // Come back when you have time
-                 {"141", "30", "1", "1", "2500", "0"},  // Alright see you, can't be friends
-                 {"142", "30", "1", "1", "3000", "0"}   // Hey, where are you going  
+                {{"140", "27", "0", "1", "3700", "0"},  // Come back when you have time
+                 {"141", "28", "0", "1", "3900", "0"},  // Alright see you, can't be friends
+                 {"142", "28", "0", "1", "3700", "0"}   // Hey, where are you going  
                 }   
             } 
         }
