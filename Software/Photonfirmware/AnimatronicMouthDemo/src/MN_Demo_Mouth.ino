@@ -88,12 +88,12 @@ const int MOUTH_OPENED = 112; //  servo position for the wide open mouth
 #endif
 
 #ifdef JIM_MOUTH
-const int MOUTH_CLOSED = 152;  //  servo position for the mouth closed
-const int MOUTH_OPENED = 145;  //  servo position for the wide open mouth
+const int MOUTH_CLOSED = 154;  //  servo position for the mouth closed
+const int MOUTH_OPENED = 143;  //  servo position for the wide open mouth
 #endif
 
-const unsigned long BUSY_WAIT = 2000UL; // busy pin wait time = 2 second
-const unsigned long EYES_START_TIME = 1000UL; // time to eye sequence to start up
+const unsigned long BUSY_WAIT = 0; //2000UL; // busy pin wait time = 2 second
+const unsigned long EYES_START_TIME = 0; // 1000UL; // time to eye sequence to start up
 const unsigned long EYES_COMPLETE_TIME = 1000UL;  // time to eye sequence to stop
 const unsigned long DEBOUNCE_TIME = 10UL; // time for button debouncing
 
@@ -180,7 +180,7 @@ const Personality personalities[2] = // one for each personality
             },
             { 3,    // Person_entered_fov
                 {{"110", "26", "0", "1", "3700", "0"},  // Hello there
-                 {"111", "28", "0", "1", "3600", "0"},  // Nice to see you
+                 {"111", "27", "0", "1", "3100", "0"},  // Nice to see you
                  {"112", "27", "0", "1", "3600", "0"}   // Come a little closer
                 } 
             },
