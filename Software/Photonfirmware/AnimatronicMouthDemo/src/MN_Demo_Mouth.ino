@@ -37,8 +37,9 @@
  * Author: Bob Glicksman, Jim Schrempp, Team Practical Projects
  * (c) 2021, Team practical projects.  All rights reserved.
  * Released under open source, non-commercial license.
- * Date: 5/28/2022
+ * Date: 10/13/2022
  * 
+ * version 1.7: moved audio clips to TPP_clipinfo and added TPP_Animatronic_Global.h
  * version 1.6: Added second personality based on A4 (open = personality 0, ground = personality 1)
  *                 see the structure "personalities"
  *              Added cloud function to set mouth position for calibration (had to redo a bit of
@@ -55,11 +56,15 @@
  * 
  */
 
-//#define BOB_MOUTH
-#define JIM_MOUTH
 
 #include <DFRobotDFPlayerMini.h>
 #include <math.h>
+#include <TPP_clipinfo.h>
+#include <TPP_Animatronic_Global.h>
+
+//#define BOB_MOUTH
+#define JIM_MOUTH
+
 
 // create an instance of the mini MP3 player
 DFRobotDFPlayerMini miniMP3Player;
@@ -107,15 +112,6 @@ int nlProcess = 0;  // 0 for skip non linear processing, 1 for sqrt processing, 
 int maxFound = 0; // the maximum analog value found in the data set
 int minFound = 4095; // the minimum analog value found in the data set
 
-// define enumerated events reported from the eyes code
-enum TOF_detect {
-    No_change_in_fov = 0,
-    Person_entered_fov = 1,   // empty FOV goes to a valid detection in any zone
-    Person_left_fov = 2,      // valid detection in any zone goes to empty FOV
-    Person_too_close = 3,     // smallest distance is < TOO_CLOSE mm
-    Person_left_quickly = 4   // same as #2 but FOV was vacated in a short time period
-};
-#define NUM_EVENTS 5  // if you add more events, update this and be sure to update personalities initializer
 
 // global variables for eyes event processing
 TOF_detect statusChange;    // the new status from the eyes code
@@ -123,87 +119,20 @@ bool newDetectionFlag;      // indication that a new event came in from the eyes
 int mg_personalityNumber;   // 0-4 set by jumpers XX and XX on the board read as binary number
 int mg_mouthPosition;       // current mouth position, mostly for reporting to cloud function
 
-// structure definition for clip data
-struct ClipData {
-    String clipNumber; // the track number on the SD card
-    String volume;     // the playback volume setting on the mini MP3 player
-    String nlproc;        // the non-linear processing type for clip data
-    String avSamples;  // the number of samples to average
-    String aMax;       // the largest analog value to map to servo upper limit
-    String aMin;       // the smallest analog value to map to the servo lower limit
-};
-
-struct EventAudio {
+#define MAX_CLIPS_PER_EVENT 10 
+struct clipsForEvent {
     int numClips;
-    ClipData clipdata[10]; // no more than 10 clips per TOF event
+    ClipData *p_clipdata[MAX_CLIPS_PER_EVENT]; // no more than 10 clips per TOF event
 } ;
+
 
 struct Personality {
-    EventAudio events[NUM_EVENTS]; // to match number of choises in events TOF_Detect enum
+    clipsForEvent events[NUM_TOF_EVENTS]; // to match number of choises in events TOF_Detect enum
 } ;
 
-const Personality personalities[2] = // one for each personality
-{
-    { // personality 0
-        {
-            { 0,    //  No_change_in_fov
-                { 
-                } 
-            },
-            { 1,    // Person_entered_fov
-                { {"11", "23", "1", "1", "2500", "0"}  // welcome
-                } 
-            },
-            { 1,    // Person_left_fov 
-                {{"15", "23", "1", "1", "2000", "0"}   // thanks for coming  
-                } 
-            },
-            { 1,    // Person_too_close
-                {{"14", "23", "1", "1", "2500", "0"}   // backoff you're too close
-                }  
-            },
-            { 1,    // Person_left_quickly
-                {{"13", "23", "1", "1", "3000", "0"}   // don't walk away when I'm talking to you
-                }  
-            } 
-        }
+#define NUM_PERSONALITIES 2
+Personality personalities[NUM_PERSONALITIES]; // = // one for each personality
 
-    },
-    { // personality 1
-        {
-            { 4,    //  No_change_in_fov
-                {{"100", "25", "0", "1", "3700", "0"},  // Snoring
-                 {"102", "25", "0", "1", "3500", "0"},  // Where's that pencil
-                 {"103", "25", "0", "1", "3600", "0"},  // Guess your weight
-                 {"104", "25", "0", "1", "3300", "0"},  // I'm lonely
-                } 
-            },
-            { 3,    // Person_entered_fov
-                {{"110", "26", "0", "1", "3700", "0"},  // Hello there
-                 {"111", "27", "0", "1", "3100", "0"},  // Nice to see you
-                 {"112", "27", "0", "1", "3600", "0"}   // Come a little closer
-                } 
-            },
-            { 3,    // Person_left_fov 
-                {{"120", "27", "0", "1", "3300", "0"},  // See you later
-                 {"121", "27", "0", "1", "3700", "0"},  // Come back again
-                 {"122", "26", "0", "1", "3700", "0"}   // Thanks for stopping by  
-                } 
-            },
-            { 2,    // Person_too_close
-                {{"130", "27", "0", "1", "3800", "0"},  // Take off my head
-                 {"131", "28", "0", "1", "3500", "0"}   // You're a little too close
-                }  
-            },
-            { 3,    // Person_left_quickly
-                {{"140", "27", "0", "1", "3700", "0"},  // Come back when you have time
-                 {"141", "28", "0", "1", "3900", "0"},  // Alright see you, can't be friends
-                 {"142", "28", "0", "1", "3700", "0"}   // Hey, where are you going  
-                }   
-            } 
-        }
-    }
-};
 
 // define enumerated state variable for loop() state machine
 enum StateVariable {
@@ -224,26 +153,59 @@ enum ButtonStates {
   releasedTentative  // button seems to be released, need verificaton
 };
 
+// Initialize the personalities structure
+void initPersonalities(){
+    for (int i = 0; i < NUM_PERSONALITIES; i++) {
+        for (int j = 0; j < NUM_TOF_EVENTS; j++ ){
+            personalities[i].events[j].numClips = 0;
+        }
+    }
+}
 
+// load the personality structure from the audioClips array in TPP_clipinfo.cpp
+void loadPersonalities(ClipData *audioClips){
+
+    int i = 0;
+
+    // -1 signals the end of the audioClips[] array
+    while (audioClips[i].personalityNum != -1) {
+
+        int thisPersonality = audioClips[i].personalityNum;
+        TOF_detect thisTOFEvent = audioClips[i].TOFEvent; 
+
+        clipsForEvent *p_toEvent = &personalities[thisPersonality].events[thisTOFEvent];
+        
+        if (p_toEvent->numClips < MAX_CLIPS_PER_EVENT ) {
+            p_toEvent->p_clipdata[p_toEvent->numClips] = &audioClips[i];
+            p_toEvent->numClips++;
+        } 
+
+        i++; 
+    }
+}
 
 //function to set up the data and playback a clip
-void clipPlay(ClipData thisClip) {
-    analogMin(thisClip.aMin);
-    analogMax(thisClip.aMax);
-    nlp(thisClip.nlproc);
-    samples(thisClip.avSamples);
-    clipVolume(thisClip.volume);
-    clipNum(thisClip.clipNumber);
+void clipPlay(ClipData *p_thisClip) {
+    analogMin(p_thisClip->aMin);
+    analogMax(p_thisClip->aMax);
+    nlp(p_thisClip->nlproc);
+    samples(p_thisClip->avSamples);
+    clipVolume(p_thisClip->volume);
+    clipNum(p_thisClip->clipNumber);
+    Particle.publish("playing clip: " + p_thisClip->clipNumber);
 }  // end of clipPlay()
 
 // pick a random clip to play from the choices we have
-void eventResponse(EventAudio audioClips) {
+//   returns true if there is a clip to play, otherwise false
+bool eventResponse(clipsForEvent audioClips) {
+    bool rtnCode = false;
     if (audioClips.numClips > 0) {
+        rtnCode = true;
         int clipToPlay = random(audioClips.numClips);
-        ClipData chosenClip = audioClips.clipdata[clipToPlay];
+        ClipData *chosenClip = audioClips.p_clipdata[clipToPlay];
         clipPlay(chosenClip);
     };
-
+    return rtnCode;
 }
 
 // move the mouth servo
@@ -273,10 +235,11 @@ int newMouthEvent(String detection) {
     statusChange = (TOF_detect)ordinalDetection;
 
     // make sure we got a valid enumerated value or else don't set the newDetectionFlag
-    if( (statusChange == Person_entered_fov) || (statusChange == Person_left_fov) || (statusChange == Person_too_close) || (statusChange == Person_left_quickly)) {
+    if ((statusChange > -1) && (statusChange < NUM_TOF_EVENTS)) {
         newDetectionFlag = true;
     } else {
         newDetectionFlag = false;
+        Particle.publish("received event was out of range: " + detection );
     }
     return ordinalDetection;
 }
@@ -328,6 +291,9 @@ void setup() {
     digitalWrite(LED_PIN, HIGH);
     moveMouth(MOUTH_CLOSED);
 
+    // initialize the personalities array with clipData
+    initPersonalities();
+    loadPersonalities(audioClips);
     mg_personalityNumber = 0;  // default 
 
 
@@ -365,90 +331,95 @@ void loop() {
     // state machine to signal the eyes, play the clip and move the mouth
     switch (state) {
         case idle:  // wait for new event from the eyes
-        if(digitalRead(BUSY_PIN) == HIGH) { // make sure mini MP3 is ready
-            // check the new event flag for an event from the eyes code
-            if(newDetectionFlag == true) {
-            digitalWrite(GREEN_LED_PIN, HIGH);    // visual indication of motion    
-            busyTime = millis();    // update timer time
-            state = motionDetected; // transition to the next state
+            if(digitalRead(BUSY_PIN) == HIGH) { // make sure mini MP3 is ready
+                // check the new event flag for an event from the eyes code
+                if(newDetectionFlag == true) {
+                    digitalWrite(GREEN_LED_PIN, HIGH);    // visual indication of motion    
+                    busyTime = millis();    // update timer time
+                    state = motionDetected; // transition to the next state
+                }
+                else {
+                    state = idle; // stay in the idle state
+                }
             }
-            else {
-            state = idle; // stay in the idle state
-            }
-        }
-        break;
+            break;
         
         case motionDetected:  // motion is detected, signal the eyes and wait
-        if( (millis() - busyTime) >= EYES_START_TIME) {
+            if( (millis() - busyTime) >= EYES_START_TIME) {
 
-            eventResponse(personalities[mg_personalityNumber].events[statusChange]);
-
-            newDetectionFlag = false;
-            busyTime = millis();    // reset the timer for the next state
-            state = clipWaiting;  // transition to next state
-        }
-        else {
-            state = motionDetected; // stay in present state
-        }
-        break;
+                bool hasAudio = eventResponse(personalities[mg_personalityNumber].events[statusChange]);
+                newDetectionFlag = false;
+                if (hasAudio) {
+                    busyTime = millis();    // reset the timer for the next state
+                    state = clipWaiting;  // transition to next state
+                } else {
+                    // no audio for the event
+                    Particle.publish ("no audio clips for event " + String(statusChange));
+                    state = idle;
+                }
+            }
+            else {
+                state = motionDetected; // stay in present state
+            }
+            break;
 
         case clipWaiting:   // wait for busy to assert (low)
-        if(digitalRead(BUSY_PIN) == LOW) {   // now busy
-            busyTime = millis();    // reset the timer for the next state
-            state = clipPlaying;  // transition to next state
-        }
-        else {  // clip hasn't started yet
-            state = clipWaiting; // stay in present state
-        }
-        break;
+            if(digitalRead(BUSY_PIN) == LOW) {   // now busy
+                busyTime = millis();    // reset the timer for the next state
+                state = clipPlaying;  // transition to next state
+            }
+            else {  // clip hasn't started yet
+                state = clipWaiting; // stay in present state
+            }
+            break;
 
         case clipPlaying: // clip; playing, wait for busy to unassert (complete)
-        if(digitalRead(BUSY_PIN) == HIGH) {   // not busy anymore, clip is done
-            busyTime = millis();    // reset the timer for the next state
-            state = clipComplete;  // transition to next state
-        }
-        else {  // clip still in process of playing
-            state = clipPlaying; // stay in present state
-        }
-        break;
+            if(digitalRead(BUSY_PIN) == HIGH) {   // not busy anymore, clip is done
+                busyTime = millis();    // reset the timer for the next state
+                state = clipComplete;  // transition to next state
+            }
+            else {  // clip still in process of playing
+                state = clipPlaying; // stay in present state
+            }
+            break;
 
         case clipComplete:  // clip has finished, keep eyes going a little longer
-        if( (millis() - busyTime) >= EYES_COMPLETE_TIME) {
-            digitalWrite(GREEN_LED_PIN, LOW); // reset indicator
-            state = clipEnd;  // transition to next state, don't update the timer!
-        }
-        else {
-            state = clipComplete; // stay in present state
-        }
-        break;
+            if( (millis() - busyTime) >= EYES_COMPLETE_TIME) {
+                digitalWrite(GREEN_LED_PIN, LOW); // reset indicator
+                state = clipEnd;  // transition to next state, don't update the timer!
+            }
+            else {
+                state = clipComplete; // stay in present state
+            }
+            break;
 
         case clipEnd:   // just make sure busy pin has been unasserted long enough
-        // test that busy pin is unasserted long enough and PIR is unasserted so don't retrigger
-        if( (millis() - busyTime) >= BUSY_WAIT ) {  
-            if(buttonToggle == false) { // no pause state indicated
-                state = idle;
+            // test that busy pin is unasserted long enough and PIR is unasserted so don't retrigger
+            if( (millis() - busyTime) >= BUSY_WAIT ) {  
+                if(buttonToggle == false) { // no pause state indicated
+                    state = idle;
+                }
+                else {    // we must go to pause state
+                    state = paused;
+                }
             }
-            else {    // we must go to pause state
-                state = paused;
+            else {
+                state = clipEnd; // stay in present state
             }
-        }
-        else {
-            state = clipEnd; // stay in present state
-        }
-        break;    
+            break;    
 
         case paused: //   we stay in pause state until buttonToggle is toggled false
             if(buttonToggle == true) {  // stay in paused state
-            state = paused;
+                state = paused;
             }
             else {    // exit the pause state - return to idle
-            state = idle;
+                state = idle;
             }
             break;
 
         default:
-        // the next state is idle
-        state = idle;
+            // the next state is idle
+            state = idle;
     }
 
 } // end of loop()
