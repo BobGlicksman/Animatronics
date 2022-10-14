@@ -4,8 +4,7 @@
 			"path": "."
 		}
 	],
-	"settings": {
-        "cortex-debug.openocdPath": "${command:particle.getDebuggerOpenocdPath}",
+    "settings": {
         "files.associations": {
             "cmath": "cpp",
             "cstdarg": "cpp",

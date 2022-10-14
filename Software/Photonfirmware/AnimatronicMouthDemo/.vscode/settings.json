@@ -5,7 +5,7 @@
     "files.associations": {
         "*.ino": "cpp"
     },
-    "particle.targetDevice": "p8-mouth",
+    "particle.targetDevice": "Animatronic1",
     "particle.firmwareVersion": "3.0.0",
     "particle.targetPlatform": "photon"
 }
