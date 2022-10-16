@@ -449,6 +449,9 @@ void speak() {
                 if(nlProcess == 1) {
                     averagedData = nlScale(averagedData);
                 }
+                if (nlProcess == 2) {
+                    averagedData = sqrt(averagedData) / sqrt(maxValue) * maxValue;
+                }
                 // command the servo
                 servoCommand = map(averagedData, minValue, maxValue, MOUTH_CLOSED, MOUTH_OPENED);
                 // constrain the servo so it doesn't peg at 0 or 180 degrees.
@@ -589,12 +592,14 @@ bool buttonPressed() {
         }
         else {  // button is pressed
             if( (millis() - lastTime < DEBOUNCE_TIME)) { // button not yet debounced
-            _buttonState = pressedTentative; 
-            return false;
+                _buttonState = pressedTentative; 
+                _buttonState = pressedTentative; 
+                _buttonState = pressedTentative; 
+                return false;
             }
             else {  // button is debounced
-            _buttonState = buttonOn;
-            return true;  // tell caller that the button has been presed
+                _buttonState = buttonOn;
+                return true;  // tell caller that the button has been presed
             }
         }
 
@@ -612,12 +617,12 @@ bool buttonPressed() {
     case releasedTentative:  // button seems to be released, need verificaton
         if(digitalRead(BUTTON_PIN) == HIGH) { // button still released
             if( (millis() - lastTime < DEBOUNCE_TIME)) {  // not yet debounced
-            _buttonState = releasedTentative;
-            return false;
+                _buttonState = releasedTentative;
+                return false;
             }
             else {  // debounced and verified released
-            _buttonState = buttonOff;
-            return false;
+                _buttonState = buttonOff;
+                return false;
             }
         }
         else {  // false reading, button still pressed
