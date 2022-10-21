@@ -37,8 +37,9 @@
  * Author: Bob Glicksman, Jim Schrempp, Team Practical Projects
  * (c) 2021, Team practical projects.  All rights reserved.
  * Released under open source, non-commercial license.
- * Date: 10/13/2022
- * 
+ * Date: 10/21/2022
+ *          
+ *              Added to not play same clip twice in a row for an event (unless there is only one clip)
  * version 1.7: moved audio clips to TPP_clipinfo and added TPP_Animatronic_Global.h
  * version 1.6: Added second personality based on A4 (open = personality 0, ground = personality 1)
  *                 see the structure "personalities"
@@ -121,7 +122,8 @@ int mg_mouthPosition;       // current mouth position, mostly for reporting to c
 
 #define MAX_CLIPS_PER_EVENT 10 
 struct clipsForEvent {
-    int numClips;
+    int numClips = 0;
+    int lastPlayedClip = 0;
     ClipData *p_clipdata[MAX_CLIPS_PER_EVENT]; // no more than 10 clips per TOF event
 } ;
 
@@ -158,6 +160,7 @@ void initPersonalities(){
     for (int i = 0; i < NUM_PERSONALITIES; i++) {
         for (int j = 0; j < NUM_TOF_EVENTS; j++ ){
             personalities[i].events[j].numClips = 0;
+            personalities[i].events[j].lastPlayedClip = 0;
         }
     }
 }
@@ -197,12 +200,20 @@ void clipPlay(ClipData *p_thisClip) {
 
 // pick a random clip to play from the choices we have
 //   returns true if there is a clip to play, otherwise false
-bool eventResponse(clipsForEvent audioClips) {
+bool eventResponse(clipsForEvent *audioClips) {
     bool rtnCode = false;
-    if (audioClips.numClips > 0) {
+    if (audioClips->numClips > 0) {
         rtnCode = true;
-        int clipToPlay = random(audioClips.numClips);
-        ClipData *chosenClip = audioClips.p_clipdata[clipToPlay];
+
+        int clipToPlay = 0;
+        if (audioClips->numClips > 1) {
+            // select a clip that is not the one previously played
+            do {
+                clipToPlay = random(audioClips->numClips);
+            } while (clipToPlay == audioClips->lastPlayedClip);
+            audioClips->lastPlayedClip = clipToPlay;
+        }
+        ClipData *chosenClip = audioClips->p_clipdata[clipToPlay];
         clipPlay(chosenClip);
     };
     return rtnCode;
@@ -296,6 +307,7 @@ void setup() {
     loadPersonalities(audioClips);
     mg_personalityNumber = 0;  // default 
 
+    randomSeed((int)Time.now);
 
 } // end of setup()
 
@@ -347,7 +359,7 @@ void loop() {
         case motionDetected:  // motion is detected, signal the eyes and wait
             if( (millis() - busyTime) >= EYES_START_TIME) {
 
-                bool hasAudio = eventResponse(personalities[mg_personalityNumber].events[statusChange]);
+                bool hasAudio = eventResponse(&personalities[mg_personalityNumber].events[statusChange]);
                 newDetectionFlag = false;
                 if (hasAudio) {
                     busyTime = millis();    // reset the timer for the next state
