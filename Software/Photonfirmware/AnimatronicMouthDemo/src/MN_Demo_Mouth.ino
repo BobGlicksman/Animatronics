@@ -63,8 +63,8 @@
 #include <TPP_clipinfo.h>
 #include <TPP_Animatronic_Global.h>
 
-#define BOB_MOUTH
-//#define JIM_MOUTH
+//#define BOB_MOUTH
+#define JIM_MOUTH
 
 
 // create an instance of the mini MP3 player
@@ -94,8 +94,8 @@ const int MOUTH_OPENED = 112; //  servo position for the wide open mouth
 #endif
 
 #ifdef JIM_MOUTH
-const int MOUTH_CLOSED = 154;  //  servo position for the mouth closed
-const int MOUTH_OPENED = 143;  //  servo position for the wide open mouth
+const int MOUTH_CLOSED = 152;  //  servo position for the mouth closed
+const int MOUTH_OPENED = 145;  //  servo position for the wide open mouth
 #endif
 
 const unsigned long BUSY_WAIT = 0; //2000UL; // busy pin wait time = 2 second
@@ -322,7 +322,7 @@ void loop() {
     if (personality0 == HIGH) {
         mg_personalityNumber = 0;
     } else {
-        mg_personalityNumber = 1;
+        mg_personalityNumber = 2;
     }
 
     // refresh the analog sampling and processing the mouth movement continuously
