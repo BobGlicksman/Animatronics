@@ -38,7 +38,8 @@
  * (c) 2021, Team practical projects.  All rights reserved.
  * Released under open source, non-commercial license.
  * Date: 10/21/2022
- *          
+ *              
+ *              Made Jim's personality be #2
  *              Added to not play same clip twice in a row for an event (unless there is only one clip)
  * version 1.7: moved audio clips to TPP_clipinfo and added TPP_Animatronic_Global.h
  * version 1.6: Added second personality based on A4 (open = personality 0, ground = personality 1)
@@ -305,7 +306,6 @@ void setup() {
     // initialize the personalities array with clipData
     initPersonalities();
     loadPersonalities(audioClips);
-    mg_personalityNumber = 0;  // default 
 
     randomSeed((int)Time.now);
 
@@ -315,15 +315,30 @@ void loop() {
     static unsigned long busyTime = millis();
     static StateVariable state = idle;
     static bool buttonToggle = false;   // if set true, put demo in pause mode
+    static int lastPersonality = -1;
 
     // detect personality
     int personality0 = digitalRead(PERSONALITY_PIN0);
-    // int personality1 = digitalRead(PERSONALITY_PIN1); // when we want to go to more than 2 personalities
-    if (personality0 == HIGH) {
-        mg_personalityNumber = 0;
+    int personality1 = digitalRead(PERSONALITY_PIN1); // when we want to go to more than 2 personalities
+    if (personality1 == LOW) {
+        if (personality0 == LOW) {
+            mg_personalityNumber = 0;
+        } else {
+            mg_personalityNumber = 1;
+        }
     } else {
-        mg_personalityNumber = 2;
+        if (personality0 == LOW) {
+            mg_personalityNumber = 2;
+        } else {
+            mg_personalityNumber = 3;
+        }
     }
+
+    if (lastPersonality != mg_personalityNumber) {
+        Particle.publish("Personality: " + String(mg_personalityNumber));
+        lastPersonality = mg_personalityNumber;
+    }
+
 
     // refresh the analog sampling and processing the mouth movement continuously
     speak();
