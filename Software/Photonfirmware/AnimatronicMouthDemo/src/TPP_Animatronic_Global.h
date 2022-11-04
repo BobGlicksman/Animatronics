@@ -16,9 +16,11 @@ enum TOF_detect {
     Person_entered_fov = 1,   // empty FOV goes to a valid detection in any zone
     Person_left_fov = 2,      // valid detection in any zone goes to empty FOV
     Person_too_close = 3,     // smallest distance is < TOO_CLOSE mm
-    Person_left_quickly = 4   // same as #2 but FOV was vacated in a short time period
+    Person_left_quickly = 4,   // same as #2 but FOV was vacated in a short time period
+    Puppet_is_ready = 5       // the system has rebooted and is ready to use
 };
-#define NUM_TOF_EVENTS 5  // if you add more events, update this 
+#define NUM_TOF_EVENTS 6  // if you add more events, update this or you'll get what looks like corruption
+
 
 
 #endif

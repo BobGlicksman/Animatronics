@@ -39,6 +39,7 @@
  * Released under open source, non-commercial license.
  * Date: 10/21/2022
  *              
+ *              bug fix: set num_personalities to 4
  *              Made Jim's personality be #2
  *              Added to not play same clip twice in a row for an event (unless there is only one clip)
  * version 1.7: moved audio clips to TPP_clipinfo and added TPP_Animatronic_Global.h
@@ -87,7 +88,7 @@ const int PERSONALITY_PIN1 = A5;
 
 // defined constants
 const unsigned long SAMPLE_INTERVAL = 10; // 10 ms analog input sampling interval
-
+const char *MOUTH_EVENT_NAME = "MOUTH_EVENT";
 
 #ifdef BOB_MOUTH
 const int MOUTH_CLOSED = 123; //  servo position for the mouth closed
@@ -133,7 +134,7 @@ struct Personality {
     clipsForEvent events[NUM_TOF_EVENTS]; // to match number of choises in events TOF_Detect enum
 } ;
 
-#define NUM_PERSONALITIES 2
+#define NUM_PERSONALITIES 4
 Personality personalities[NUM_PERSONALITIES]; // = // one for each personality
 
 
@@ -156,20 +157,11 @@ enum ButtonStates {
   releasedTentative  // button seems to be released, need verificaton
 };
 
-// Initialize the personalities structure
-void initPersonalities(){
-    for (int i = 0; i < NUM_PERSONALITIES; i++) {
-        for (int j = 0; j < NUM_TOF_EVENTS; j++ ){
-            personalities[i].events[j].numClips = 0;
-            personalities[i].events[j].lastPlayedClip = 0;
-        }
-    }
-}
-
 // load the personality structure from the audioClips array in TPP_clipinfo.cpp
-void loadPersonalities(ClipData *audioClips){
+void loadPersonalities(ClipData audioClips[]){
 
-    int i = 0;
+
+    int i = 0; // index through the audio clips array we are loading
 
     // -1 signals the end of the audioClips[] array
     while (audioClips[i].personalityNum != -1) {
@@ -177,13 +169,16 @@ void loadPersonalities(ClipData *audioClips){
         int thisPersonality = audioClips[i].personalityNum;
         TOF_detect thisTOFEvent = audioClips[i].TOFEvent; 
 
-        clipsForEvent *p_toEvent = &personalities[thisPersonality].events[thisTOFEvent];
-        
-        if (p_toEvent->numClips < MAX_CLIPS_PER_EVENT ) {
-            p_toEvent->p_clipdata[p_toEvent->numClips] = &audioClips[i];
-            p_toEvent->numClips++;
-        } 
-
+        if (thisPersonality >= NUM_PERSONALITIES) {
+            Particle.publish (MOUTH_EVENT_NAME, "ERROR: Personality number exeeds max, clip ignored.");
+        } else {
+            clipsForEvent *p_toEvent = &personalities[thisPersonality].events[thisTOFEvent];
+            
+            if (p_toEvent->numClips < MAX_CLIPS_PER_EVENT ) {
+                p_toEvent->p_clipdata[p_toEvent->numClips] = &audioClips[i];
+                p_toEvent->numClips++;
+            } 
+        }
         i++; 
     }
 }
@@ -279,6 +274,9 @@ void setup() {
     Particle.subscribe("TOF_event", tofHandler);   // this will respond to published event from the eyes code
     Particle.function("MouthPosition", PFmouthPosition); // for testing mouth position 
 
+    // start serial for debugging
+    Serial.begin();
+
     // clear out the new event detection flag
     newDetectionFlag = false;
 
@@ -304,7 +302,7 @@ void setup() {
     moveMouth(MOUTH_CLOSED);
 
     // initialize the personalities array with clipData
-    initPersonalities();
+
     loadPersonalities(audioClips);
 
     randomSeed((int)Time.now);
@@ -391,7 +389,10 @@ void loop() {
             break;
 
         case clipWaiting:   // wait for busy to assert (low)
-            if(digitalRead(BUSY_PIN) == LOW) {   // now busy
+            if (millis()-busyTime > 2000) {
+                Particle.publish("clipWaiting time out");
+            }
+            if ((digitalRead(BUSY_PIN) == LOW) || (millis()-busyTime > 2000)) {   // now busy
                 busyTime = millis();    // reset the timer for the next state
                 state = clipPlaying;  // transition to next state
             }

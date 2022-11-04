@@ -15,6 +15,9 @@
 // the array is scanned and loaded into the personalities structure. The
 // entries here can be in any order. A particular clipNum could be in this
 // array more than once, if that's what you want.
+
+// Be sure to correctly set NUM_PERSONALITIES in the main code file.
+
 ClipData audioClips[] = 
 {
 
@@ -48,4 +51,6 @@ ClipData audioClips[] =
     // end marker, always the last array entry
     {-1, (TOF_detect) 0, "no", "no", "no", "no", "no", "no"} 
 };
+
+ClipData placeholderClip = {-1, (TOF_detect) 0, "no", "no", "no", "no", "no", "no"};
 
