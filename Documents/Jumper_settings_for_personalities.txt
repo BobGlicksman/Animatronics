@@ -1,0 +1,9 @@
+JUMPER SETTINGS FOR PERSONALITIES
+
+A5 = MSB; A4 = LSB; Logic is positive (open pin = 1, grounded pin = 0
+
+
+Bob Personality #1:  ground both A4 and A5
+Bob Personality #2 (not yet implemented): Ground A5, Open A4
+Jim Personality #1: Open A5, Ground A4
+Jim Personality #2 (not yet implemented): Open A5, Open A4
