@@ -24,7 +24,7 @@
 #ifndef _TPP_TOF_H
 #define _TPP_TOF_H
 
-//#define CONTINUOUS_DEBUG_DISPLAY
+#define CONTINUOUS_DEBUG_DISPLAY
 
 #include <SparkFun_VL53L5CX_Library.h> //http://librarymanager/All#SparkFun_VL53L5CX
 #include <Wire.h>
@@ -49,7 +49,7 @@ public:
     void getPOI(pointOfInterest *pPOI);
 
 private:
-    void prettyPrint(int32_t dataArray[]);
+    int prettyPrint(int32_t dataArray[]);
     void processMeasuredData(VL53L5CX_ResultsData measurementData, int32_t adjustedData[]);
     int  scoreZone(int location, int32_t dataArray[]);
     int  avgdistZone(int location, int32_t distance[]);
