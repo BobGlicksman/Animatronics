@@ -65,8 +65,8 @@
 #include <TPP_clipinfo.h>
 #include <TPP_Animatronic_Global.h>
 
-//#define BOB_MOUTH
-#define JIM_MOUTH
+#define BOB_MOUTH
+//#define JIM_MOUTH
 
 
 // create an instance of the mini MP3 player
