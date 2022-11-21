@@ -56,13 +56,24 @@ TPP_TOF theTOF;
 const long IDLE_SEQUENCE_MIN_WAIT_MS = 10000; //30 sec // during idle times, random activity will happen longer than this
 const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't need to upload the TOF data very often
 
-SerialLogHandler logHandler1(LOG_LEVEL_INFO, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
-    { "app.main", LOG_LEVEL_ALL }               // Logging for main loop
-    ,{ "app.puppet", LOG_LEVEL_INFO }               // Logging for Animate puppet methods
-    ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
-    ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
-    ,{"comm.protocol", LOG_LEVEL_WARN}          // particle communication system 
-});
+//
+#ifdef DEBUGON
+    SerialLogHandler logHandler1(LOG_LEVEL_INFO, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
+        { "app.main", LOG_LEVEL_ALL }               // Logging for main loop
+        ,{ "app.puppet", LOG_LEVEL_INFO }               // Logging for Animate puppet methods
+        ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
+        ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
+        ,{"comm.protocol", LOG_LEVEL_WARN}          // particle communication system 
+    });
+#else
+    SerialLogHandler logHandler1(LOG_LEVEL_ERROR, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
+        { "app.main", LOG_LEVEL_ERROR }               // Logging for main loop
+        ,{ "app.puppet", LOG_LEVEL_ERROR }               // Logging for Animate puppet methods
+        ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
+        ,{ "app.aniservo", LOG_LEVEL_ERROR }          // Logging for Animate Servo details
+        ,{"comm.protocol", LOG_LEVEL_ERROR}          // particle communication system 
+    });
+#endif
 
 Logger mainLog("app.main");
 

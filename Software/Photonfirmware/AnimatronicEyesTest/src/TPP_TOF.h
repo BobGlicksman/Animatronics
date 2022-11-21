@@ -49,7 +49,7 @@ public:
     void getPOI(pointOfInterest *pPOI);
 
 private:
-    void prettyPrint(int32_t dataArray[]);
+    int prettyPrint(int32_t dataArray[]);
     void processMeasuredData(VL53L5CX_ResultsData measurementData, int32_t adjustedData[]);
     int  scoreZone(int location, int32_t dataArray[]);
     int  avgdistZone(int location, int32_t distance[]);

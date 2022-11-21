@@ -274,14 +274,11 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
             // process the measured data
             processMeasuredData(measurementData, adjustedData);
             
-#ifdef CONTINUOUS_DEBUG_DISPLAY
-            prettyPrint(adjustedData);
-#endif
             // XXXX New criteria (v 0.8+ for establishing the smallest valid distance)
             //  Walk through the adjustedData array except for the edges.  For each possible
             //    smallest value found, check that surrounding values asre valid.
 
-            secondTableTitle = "avgDistThisZone";
+            //
             // do not process the edges: x, y == 0 or x,y == 7  
             for (int y = 0; y < imageWidth; y++) {
                 for (int x = 0; x < imageWidth; x++) {
@@ -308,6 +305,10 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
             }
 
 #ifdef CONTINUOUS_DEBUG_DISPLAY
+
+            int linesPrinted = 0;
+            linesPrinted = prettyPrint(adjustedData);
+
             // print out focus value found
             Serial.print("\nFocus on x = ");
             Serial.printf("%-5ld", focusX);
@@ -318,13 +319,16 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
             Serial.println();
             Serial.println();
             Serial.println();
+            linesPrinted += 3;
 
-            Serial.println(secondTableTitle);
-            prettyPrint(secondTable);
+            Serial.println("avgDistThisZone");
+            linesPrinted += 1;
+            linesPrinted += prettyPrint(secondTable);
             Serial.println();
+            linesPrinted++;
 
-            // XXX overwrite the previous display
-            moveTerminalCursorUp(22);
+            // overwrite the previous display
+            moveTerminalCursorUp(linesPrinted+1);
 #endif
             
         }
@@ -342,15 +346,19 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
 
 /* ------------------------------ */
 // function to pretty print data to serial port
-void TPP_TOF::prettyPrint(int32_t dataArray[]) {
+//   retuns number of lines printed
+int TPP_TOF::prettyPrint(int32_t dataArray[]) {
     //The ST library returns the data transposed from zone mapping shown in datasheet
     //Pretty-print data with increasing y, decreasing x to reflect reality 
 
+    int lines = 0;
     for(int y = 0; y <= imageWidth * (imageWidth - 1) ; y += imageWidth)  {
         for (int x = imageWidth - 1 ; x >= 0 ; x--) {
             Serial.print("\t");
             Serial.printf("%-5ld", dataArray[x + y]);
         }
         Serial.println();
+        lines++;
     } 
+    return lines;
 }
