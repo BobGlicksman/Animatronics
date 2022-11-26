@@ -12,8 +12,9 @@
  *      the welcome sequence and return to "sleeping".
  *
  * (cc) Share Alike - Non Commercial - Attibution
- * 2020 Bob Glicksman and Jim Schrempp
+ * 2022 Bob Glicksman and Jim Schrempp
  * 
+ *      added temporal filtering
  * v1.8 changed the TOF upload time in loop to be longer (25 ms)
  * v1.7 add TOF event processing
  * v1.6 Exponential decay on the servo moves
@@ -49,14 +50,13 @@ SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer t
 
 TPP_TOF theTOF;
 
-#define DEBUGON
+// #define DEBUGON
 #define TRIGGER_PIN A5
 #define KILL_BUTTON_PIN A4
 
 const long IDLE_SEQUENCE_MIN_WAIT_MS = 10000; //30 sec // during idle times, random activity will happen longer than this
 const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't need to upload the TOF data very often
 
-//
 #ifdef DEBUGON
     SerialLogHandler logHandler1(LOG_LEVEL_INFO, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
         { "app.main", LOG_LEVEL_ALL }               // Logging for main loop
@@ -72,6 +72,7 @@ const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't nee
         ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
         ,{ "app.aniservo", LOG_LEVEL_ERROR }          // Logging for Animate Servo details
         ,{"comm.protocol", LOG_LEVEL_ERROR}          // particle communication system 
+        ,{"app.TOF", LOG_LEVEL_TRACE}
     });
 #endif
 
@@ -195,6 +196,8 @@ void setup() {
     pinMode(TRIGGER_PIN, INPUT);
     pinMode(KILL_BUTTON_PIN,INPUT_PULLUP);
 
+    pinMode(D7, OUTPUT);
+
     delay(1000);
     mainLog.info("===========================================");
     mainLog.info("===========================================");
@@ -290,7 +293,8 @@ void loop() {
         // this is called every time to allow TOF to make measurements
         pointOfInterest thisPOI;
 
-        theTOF.getPOI(&thisPOI);
+        //theTOF.getPOI(&thisPOI);
+        theTOF.getPOITemporalFiltered(&thisPOI);
         focusX = thisPOI.x;
         focusY = thisPOI.y;
         //smallestValue = thisPOI.distanceMM;

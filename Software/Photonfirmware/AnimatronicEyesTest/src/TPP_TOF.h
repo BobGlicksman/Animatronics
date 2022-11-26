@@ -47,6 +47,7 @@ class TPP_TOF {
 public:
     void initTOF();
     void getPOI(pointOfInterest *pPOI);
+    void getPOITemporalFiltered(pointOfInterest *pPOI);
 
 private:
     int prettyPrint(int32_t dataArray[]);

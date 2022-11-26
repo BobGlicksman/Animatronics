@@ -25,12 +25,18 @@
 SparkFun_VL53L5CX myImager;
 VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
 
+Logger theLogger("app.TOF");
+
 // noise range in measured data.  Anything within +/- 50 of the calibrations is noise
 const uint16_t NOISE_RANGE = 50;
 const uint16_t MAX_CALIBRATION = 2000;  // anything greater is set to 2000 mm
 
 // declare 8x8 array of calibration values
 int32_t calibration[64];
+
+#define RANGING_FREQUENCY 14  // times per second for sensor to sample the environment
+#define FRAMES_FOR_GOOD_HIT 2 // number of subsequent frames needed to consider a hit good 
+                              // this filters out spurious hits
 
 int imageResolution; // read this back from the sensor
 int imageWidth; // read this back from the sensor
@@ -67,7 +73,7 @@ void TPP_TOF::initTOF(){
     // myImager.setTargetOrder(SF_VL53L5CX_TARGET_ORDER::CLOSEST);
     // myImager.setTargetOrder(SF_VL53L5CX_TARGET_ORDER::STRONGEST);
 
-    myImager.setRangingFrequency(16);
+    myImager.setRangingFrequency(RANGING_FREQUENCY);
 
     myImager.startRanging();
 
@@ -311,11 +317,11 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
 
             // print out focus value found
             Serial.print("\nFocus on x = ");
-            Serial.printf("%-5ld", focusX);
+            Serial.printf("%5ld", focusX);
             Serial.print(" y = ");
-            Serial.printf("%-5ld", focusY);
+            Serial.printf("%5ld", focusY);
             Serial.print(" range = ");
-            Serial.printf("%-5ld", smallestValue);
+            Serial.printf("%5ld", smallestValue);
             Serial.println();
             Serial.println();
             Serial.println();
@@ -341,7 +347,50 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
 
 }
 
+// -------- getPOITemporalFiltered ------------
+// called anytime to have sensor read and interpret its zone data
+// returns the current Point Of Interest
+// only if a detection has persisted for minTimeForDetectionMS
+// this prevents spurious reports
+void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
 
+    
+    const unsigned int minTimeForDetectionMS = (1.0/RANGING_FREQUENCY*FRAMES_FOR_GOOD_HIT)*1000;
+
+    static unsigned int firstDetectionMS = 0;
+    static bool waitingFirstDetection = true;
+    bool isGoodDetection = false;
+
+    getPOI(pPOI);
+
+    if (waitingFirstDetection) {
+        if (pPOI->x >= 0) {
+            // we have a first detection
+            firstDetectionMS = millis();
+            waitingFirstDetection = false;
+        }
+    } else {
+        if (pPOI->x < 0) {
+            // No POI detected 
+            waitingFirstDetection = true;
+        }  else {
+            // the x and y are close to what we first detected
+            if (millis() - firstDetectionMS > minTimeForDetectionMS) {
+                // the temporal filter has passed
+                isGoodDetection = true;
+            }
+
+        }
+    }
+
+    if (!isGoodDetection) {
+        // did not pass temporal filter, don't report this POI
+        pPOI->x = -255;
+        pPOI->y = -255;
+    } else {
+        theLogger.trace("returning point (%4i, %4i)", pPOI->x,pPOI->y);
+    }
+}
 
 
 /* ------------------------------ */
