@@ -17,6 +17,8 @@
     This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
 
 2022 02 23  change to reduce chatter. 
+2022 11 27  change to poi detection - must be closer than calibration distance
+            getPOITemporalFiltered has better TRACE level logging
 
 */
 
@@ -116,7 +118,7 @@ void TPP_TOF::processMeasuredData(VL53L5CX_ResultsData measurementData, int32_t 
 
     int statusCode = 0;
     int measuredData = 0;
-    int32_t temp = 0;
+    int32_t deltaDist = 0;
 
     for(int i = 0; i < imageResolution; i++) {
       
@@ -137,9 +139,9 @@ void TPP_TOF::processMeasuredData(VL53L5CX_ResultsData measurementData, int32_t 
             // data is good and in range, check if background
           
             // check new data against calibration value
-            temp = abs(measuredData - calibration[i]);
+            deltaDist = abs(measuredData - calibration[i]);
 
-            if(temp <= NOISE_RANGE) { 
+            if ((deltaDist <= NOISE_RANGE) || (measuredData > calibration[i]) ){ 
                     // zero out noise  
                 
                     adjustedData[i] = -3; // data is background; ignore
@@ -282,7 +284,7 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
             
             // XXXX New criteria (v 0.8+ for establishing the smallest valid distance)
             //  Walk through the adjustedData array except for the edges.  For each possible
-            //    smallest value found, check that surrounding values asre valid.
+            //    smallest value found, check that surrounding values are valid.
 
             //
             // do not process the edges: x, y == 0 or x,y == 7  
@@ -360,6 +362,8 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
     static unsigned int firstDetectionMS = 0;
     static bool waitingFirstDetection = true;
     bool isGoodDetection = false;
+    static int suppressedX = -1;
+    static int suppressedY = -1;
 
     getPOI(pPOI);
 
@@ -368,6 +372,8 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
             // we have a first detection
             firstDetectionMS = millis();
             waitingFirstDetection = false;
+            suppressedX = -1;
+            suppressedY = -1;
         }
     } else {
         if (pPOI->x < 0) {
@@ -375,7 +381,7 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
             waitingFirstDetection = true;
         }  else {
             // the x and y are close to what we first detected
-            if (millis() - firstDetectionMS > minTimeForDetectionMS) {
+            if (millis() - firstDetectionMS >= minTimeForDetectionMS) {
                 // the temporal filter has passed
                 isGoodDetection = true;
             }
@@ -383,13 +389,21 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
         }
     }
 
-    if (!isGoodDetection) {
+    if (isGoodDetection) {
+            theLogger.trace("temporal filter returns point (%4i, %4i) dist: %ld", pPOI->x,pPOI->y,pPOI->distanceMM);
+            theLogger.trace("----");
+    } else {
+        if (!waitingFirstDetection) {
+            if((suppressedX != pPOI->x) && (suppressedY != pPOI->y) ) {
+                theLogger.trace("POI supressed (%4i, %4i) dist: %ld", pPOI->x,pPOI->y,pPOI->distanceMM);
+                suppressedX = pPOI->x;
+                suppressedY = pPOI->y;
+            }
+        }
         // did not pass temporal filter, don't report this POI
         pPOI->x = -255;
         pPOI->y = -255;
-    } else {
-        theLogger.trace("returning point (%4i, %4i)", pPOI->x,pPOI->y);
-    }
+    } 
 }
 
 
@@ -401,9 +415,16 @@ int TPP_TOF::prettyPrint(int32_t dataArray[]) {
     //Pretty-print data with increasing y, decreasing x to reflect reality 
 
     int lines = 0;
+    Serial.print("\t        ");
+    for (int i = 0; i < imageWidth; i++) {
+        Serial.printf("%-5i",i);
+    }
+    Serial.println();
+    lines++;
     for(int y = 0; y <= imageWidth * (imageWidth - 1) ; y += imageWidth)  {
+        Serial.print("\t");
+        Serial.printf("%-5i:  ", y/imageWidth);
         for (int x = imageWidth - 1 ; x >= 0 ; x--) {
-            Serial.print("\t");
             Serial.printf("%-5ld", dataArray[x + y]);
         }
         Serial.println();
