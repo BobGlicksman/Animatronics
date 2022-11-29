@@ -33,10 +33,14 @@ extern SparkFun_VL53L5CX myImager;
 extern VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
 
 typedef struct {
+    bool gotNewSensorData;      
+    bool hasDetection;    // only true if there is a detection
     unsigned long detectedAtMS;
     long distanceMM;
     int x;
     int y;
+    int calibrationDistMM;
+    int surroundingHits;  // for debug. number of adjacent zones with good data
 } pointOfInterest ;
 
 /*!

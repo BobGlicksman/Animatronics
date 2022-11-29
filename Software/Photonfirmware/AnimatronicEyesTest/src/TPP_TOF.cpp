@@ -158,7 +158,7 @@ void TPP_TOF::processMeasuredData(VL53L5CX_ResultsData measurementData, int32_t 
 
 
 /* ------------------------------ */
-// function to validate that a value is surrounded by valid values
+// returns number of adjacent zones that have valid distance data
 int TPP_TOF::scoreZone(int location, int32_t dataArray[]){
     int score = 0;
     int locX, locY, loc;
@@ -186,7 +186,7 @@ int TPP_TOF::scoreZone(int location, int32_t dataArray[]){
 }
 
 /* ------------------------------ */
-// function to validate that a value is surrounded by valid values
+// returns dist that is the average of surrounding valid zones
 int TPP_TOF::avgdistZone(int location, int32_t distance[]){
     int totalDist = 0;
     int numZones = 0;
@@ -256,9 +256,14 @@ void TPP_TOF::moveTerminalCursorDown(int numlines) {
 // returns the current Point Of Interest
 void TPP_TOF::getPOI(pointOfInterest *pPOI){
 
-    int32_t smallestValue = MAX_CALIBRATION; 
-    static int32_t focusX = -255;
-    static int32_t  focusY = -255;
+    pPOI->gotNewSensorData = false;
+    pPOI->hasDetection = false;
+    pPOI->x = -255;
+    pPOI->y = -255;
+    pPOI->distanceMM = -1;
+    pPOI->detectedAtMS = -1;
+    pPOI->calibrationDistMM = -1;
+
     int32_t adjustedData[imageResolution];
     int32_t secondTable[imageResolution];   // second table to print out
     String secondTableTitle = ""; // will hold title of second table 
@@ -273,11 +278,11 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
     if (myImager.isDataReady() == true) {
     
         if (myImager.getRangingData(&measurementData)) { //Read distance data into ST driver array
+
+            pPOI->gotNewSensorData = true;
        
             // initialize findings
-            smallestValue = MAX_CALIBRATION; // start with the max allowed
-            focusX = -255;  // code for no focus determined
-            focusY = -255;  // code for no focus determined
+            pPOI->distanceMM = MAX_CALIBRATION + 1; // start with the max allowed
 
             // process the measured data
             processMeasuredData(measurementData, adjustedData);
@@ -301,16 +306,28 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
                     secondTable[thisZone] = avgDistThisZone; 
 
                     // test for the smallest value that is a significant zone
-                    if( (avgDistThisZone > NOISE_RANGE) && (avgDistThisZone < smallestValue) &&
-                        (validate(score) == true) ) {
+                    //if( (avgDistThisZone > NOISE_RANGE) && (avgDistThisZone < smallestValue) &&
+                    //    (validate(score) == true) ) {
 
-                        focusX = x;
-                        focusY = y;
-                        smallestValue = avgDistThisZone;
-
+                    if(        (adjustedData[thisZone] > 0)                       // less than 0 is to be ignored 
+                           // && (adjustedData[thisZone] < calibration[thisZone])   // closer than our calibration frame
+                            && (adjustedData[thisZone] < pPOI->distanceMM)       // closer than current closest pPOI
+                            && (validate(score))                                 // has at least x adjacent zones with valid distances 
+                            ) {
+                        // this pPOI will be the one closest to the sensor
+                        pPOI->x  = x;
+                        pPOI->y  = y;
+                        pPOI->distanceMM = adjustedData[thisZone];
+                        pPOI->detectedAtMS = millis();
+                        pPOI->calibrationDistMM = calibration[thisZone];
+                        pPOI->hasDetection = true; 
+                        pPOI->surroundingHits =  score;
+               
                     }
                 }
             }
+
+
 
 #ifdef CONTINUOUS_DEBUG_DISPLAY
 
@@ -342,11 +359,6 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
         }
     }
 
-    pPOI->detectedAtMS = millis();
-    pPOI->distanceMM = smallestValue;
-    pPOI->x = focusX;
-    pPOI->y = focusY;
-
 }
 
 // -------- getPOITemporalFiltered ------------
@@ -356,53 +368,65 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
 // this prevents spurious reports
 void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
 
-    
-    const unsigned int minTimeForDetectionMS = (1.0/RANGING_FREQUENCY*FRAMES_FOR_GOOD_HIT)*1000;
-
-    static unsigned int firstDetectionMS = 0;
     static bool waitingFirstDetection = true;
-    bool isGoodDetection = false;
+    static int sequentialFramesWithHit = 0;
     static int suppressedX = -1;
     static int suppressedY = -1;
 
-    getPOI(pPOI);
+    bool isPersistentDetection = false;
 
-    if (waitingFirstDetection) {
-        if (pPOI->x >= 0) {
-            // we have a first detection
-            firstDetectionMS = millis();
-            waitingFirstDetection = false;
-            suppressedX = -1;
-            suppressedY = -1;
-        }
-    } else {
-        if (pPOI->x < 0) {
-            // No POI detected 
-            waitingFirstDetection = true;
-        }  else {
-            // the x and y are close to what we first detected
-            if (millis() - firstDetectionMS >= minTimeForDetectionMS) {
-                // the temporal filter has passed
-                isGoodDetection = true;
-            }
+    // get new point of interest data
+    getPOI(pPOI); 
 
-        }
+    // EARLY RETURN <<<<<<<<<<<<<<<<<<<<<
+    if ( ! pPOI->gotNewSensorData ) {
+        // did not get new sensor data
+        // return the pPOI that we just got as-is
+        return;
     }
 
-    if (isGoodDetection) {
-            theLogger.trace("temporal filter returns point (%4i, %4i) dist: %ld", pPOI->x,pPOI->y,pPOI->distanceMM);
-            theLogger.trace("----");
+    if ( ! pPOI->hasDetection) {
+        //theLogger.trace("no detection");
+        waitingFirstDetection = true; 
+
     } else {
-        if (!waitingFirstDetection) {
+
+        if (waitingFirstDetection) {
+            // we have a first detection
+            //theLogger.trace("first detection (%4i, %4i) dist: %ld calib: %d deltaCalibr: %ld surrounding: %d", 
+            //  pPOI->x, pPOI->y, pPOI->distanceMM, pPOI->calibrationDistMM, pPOI->distanceMM - pPOI->calibrationDistMM, pPOI->surroundingHits);
+            waitingFirstDetection = false;
+            sequentialFramesWithHit = 0;
+            suppressedX = -1; // set up to log this one
+            suppressedY = -1;
+        } 
+                
+        sequentialFramesWithHit++;
+        if (sequentialFramesWithHit >= FRAMES_FOR_GOOD_HIT) {
+            // the frames filter has passed
+            isPersistentDetection = true;
+        }
+
+        if (isPersistentDetection) {
+            // we'll return the POI that we got
+            theLogger.trace("temporal filter returns point (%4i, %4i) dist: %ld calib: %d deltaDist: %ld frames: %d surrounding: %d", 
+                pPOI->x, pPOI->y, pPOI->distanceMM, pPOI->calibrationDistMM, pPOI->distanceMM - pPOI->calibrationDistMM,
+                 sequentialFramesWithHit, pPOI->surroundingHits);
+            theLogger.trace("----");
+
+        } else {
+            // valid point, but not persistent so suppress this detection
+            pPOI->hasDetection = false; 
+
+            // logging
             if((suppressedX != pPOI->x) && (suppressedY != pPOI->y) ) {
-                theLogger.trace("POI supressed (%4i, %4i) dist: %ld", pPOI->x,pPOI->y,pPOI->distanceMM);
+                // only report once for each x,y
+                theLogger.trace("POI suppressed (%4i, %4i) dist: %ld  calib: %d", 
+                    pPOI->x,pPOI->y,pPOI->distanceMM,pPOI->calibrationDistMM);
                 suppressedX = pPOI->x;
                 suppressedY = pPOI->y;
             }
         }
-        // did not pass temporal filter, don't report this POI
-        pPOI->x = -255;
-        pPOI->y = -255;
     } 
 }
 

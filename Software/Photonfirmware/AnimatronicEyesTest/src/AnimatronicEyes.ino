@@ -50,7 +50,7 @@ SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer t
 
 TPP_TOF theTOF;
 
-// #define DEBUGON
+#define DEBUGON
 #define TRIGGER_PIN A5
 #define KILL_BUTTON_PIN A4
 
@@ -64,6 +64,7 @@ const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't nee
         ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
         ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
         ,{"comm.protocol", LOG_LEVEL_WARN}          // particle communication system 
+        ,{"app.TOF", LOG_LEVEL_INFO}
     });
 #else
     SerialLogHandler logHandler1(LOG_LEVEL_ERROR, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
@@ -73,6 +74,7 @@ const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't nee
         ,{ "app.aniservo", LOG_LEVEL_ERROR }          // Logging for Animate Servo details
         ,{"comm.protocol", LOG_LEVEL_ERROR}          // particle communication system 
         ,{"app.TOF", LOG_LEVEL_TRACE}
+        
     });
 #endif
 
@@ -295,8 +297,7 @@ void loop() {
 
         //theTOF.getPOI(&thisPOI);
         theTOF.getPOITemporalFiltered(&thisPOI);
-        focusX = thisPOI.x;
-        focusY = thisPOI.y;
+
         //smallestValue = thisPOI.distanceMM;
 
         // XXXX call function to process the TOF data for event publication
@@ -304,7 +305,10 @@ void loop() {
         processEvents(focusX, focusY, thisPOI.distanceMM);
 
         // do we have a focus point?
-        if ((focusX >= 0) && (focusY >= 0)) {
+        if (thisPOI.hasDetection) {
+
+            focusX = thisPOI.x;
+            focusY = thisPOI.y;
 
             lastEyeUpdateMS = millis();
 
