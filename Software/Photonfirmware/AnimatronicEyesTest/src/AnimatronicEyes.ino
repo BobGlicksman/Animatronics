@@ -192,6 +192,12 @@ void animationTimerCallback() {
     }
 }
 
+// Cloud functions must return int and take one String
+int restartDevice(String extra) {
+    System.reset();
+    return 0;
+}
+
 //------ setup -----------
 void setup() {
 
@@ -199,6 +205,8 @@ void setup() {
     pinMode(KILL_BUTTON_PIN,INPUT_PULLUP);
 
     pinMode(D7, OUTPUT);
+
+    Particle.function("restart device", restartDevice);
 
     delay(1000);
     mainLog.info("===========================================");
