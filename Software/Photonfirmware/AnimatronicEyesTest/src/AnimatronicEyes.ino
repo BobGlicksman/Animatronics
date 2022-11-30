@@ -14,6 +14,9 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2022 Bob Glicksman and Jim Schrempp
  * 
+ * v1.9 temporal filtering now requires 2 frames of the same x,y 
+ *      calibration now looks for several close frames
+ *      changed pretty print x titles of calibration array to be correct 
  *      added temporal filtering
  * v1.8 changed the TOF upload time in loop to be longer (25 ms)
  * v1.7 add TOF event processing
