@@ -88,7 +88,44 @@ void TPP_TOF::initTOF(){
     } while(myImager.isDataReady() != true);
 
     // data is now ready
-    if (myImager.getRangingData(&measurementData)) { //Read distance data into array
+
+    // look for two successive frames that are similar
+    bool gotSimilarFrames = false;
+    int frameCount = 0;
+    int sumOfDistances = 0;
+    int lastFrameSum = 0;
+    do {
+        if (myImager.isDataReady()) {
+            if(myImager.getRangingData(&measurementData)) {
+                frameCount++;
+                sumOfDistances = 0;
+                for(int i=0; i<imageResolution; i++) {
+                    sumOfDistances += measurementData.distance_mm[i];
+                }
+
+                theLogger.trace("Sum of mm: %d", sumOfDistances);
+
+                if (abs(lastFrameSum - sumOfDistances) < 500) {
+                    gotSimilarFrames = true;
+                    theLogger.info("calibration done. it took %d frames.", frameCount);
+                } else {
+                    lastFrameSum = sumOfDistances;
+                }
+
+            }
+        }
+
+        if (frameCount > 500){
+            theLogger.error("could not calibrate");
+            gotSimilarFrames = true;
+        }
+
+        delay(5); // so we're not in a tight loop
+
+    } while (!gotSimilarFrames);
+
+    
+    //if (myImager.getRangingData(&measurementData)) { //Read distance data into array
     
         // read out the measured data into an array
         for(int i = 0; i < 64; i++) {
@@ -107,7 +144,11 @@ void TPP_TOF::initTOF(){
         Serial.println("Calibration data:");
         prettyPrint(calibration);
         Serial.println("End of calibration data\n");
-    }
+   // }
+
+   
+
+
 
 }
 
@@ -310,9 +351,9 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
                     //    (validate(score) == true) ) {
 
                     if(        (adjustedData[thisZone] > 0)                       // less than 0 is to be ignored 
-                           // && (adjustedData[thisZone] < calibration[thisZone])   // closer than our calibration frame
-                            && (adjustedData[thisZone] < pPOI->distanceMM)       // closer than current closest pPOI
                             && (validate(score))                                 // has at least x adjacent zones with valid distances 
+                            && (adjustedData[thisZone] < calibration[thisZone])   // closer than our calibration frame (this does not seem to matter)
+                            && (adjustedData[thisZone] < pPOI->distanceMM)       // closer than current closest pPOI
                             ) {
                         // this pPOI will be the one closest to the sensor
                         pPOI->x  = x;
@@ -370,6 +411,8 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
 
     static bool waitingFirstDetection = true;
     static int sequentialFramesWithHit = 0;
+    static int currentX = -1;
+    static int currentY = -1;
     static int suppressedX = -1;
     static int suppressedY = -1;
 
@@ -397,11 +440,23 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
             //  pPOI->x, pPOI->y, pPOI->distanceMM, pPOI->calibrationDistMM, pPOI->distanceMM - pPOI->calibrationDistMM, pPOI->surroundingHits);
             waitingFirstDetection = false;
             sequentialFramesWithHit = 0;
+            currentX = pPOI->x;
+            currentY = pPOI->y;
             suppressedX = -1; // set up to log this one
             suppressedY = -1;
         } 
-                
-        sequentialFramesWithHit++;
+        
+        if ((currentX == pPOI->x) && (currentY == pPOI->y)) {
+            // same x,y so increment frame counter
+            sequentialFramesWithHit++;
+        } else {
+            // x,y has changed so this becomes the first frame
+            sequentialFramesWithHit = 1;
+            currentX = pPOI->x;
+            currentY = pPOI->y;
+        }
+
+        // do we have enough sequential frames to declare a hit?
         if (sequentialFramesWithHit >= FRAMES_FOR_GOOD_HIT) {
             // the frames filter has passed
             isPersistentDetection = true;
@@ -409,10 +464,11 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
 
         if (isPersistentDetection) {
             // we'll return the POI that we got
+
+            // logging
             theLogger.trace("temporal filter returns point (%4i, %4i) dist: %ld calib: %d deltaDist: %ld frames: %d surrounding: %d", 
                 pPOI->x, pPOI->y, pPOI->distanceMM, pPOI->calibrationDistMM, pPOI->distanceMM - pPOI->calibrationDistMM,
                  sequentialFramesWithHit, pPOI->surroundingHits);
-            theLogger.trace("----");
 
         } else {
             // valid point, but not persistent so suppress this detection
@@ -421,8 +477,8 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
             // logging
             if((suppressedX != pPOI->x) && (suppressedY != pPOI->y) ) {
                 // only report once for each x,y
-                theLogger.trace("POI suppressed (%4i, %4i) dist: %ld  calib: %d", 
-                    pPOI->x,pPOI->y,pPOI->distanceMM,pPOI->calibrationDistMM);
+                theLogger.trace("POI suppressed (%4i, %4i) dist: %ld  calib: %d  delta: %ld", 
+                    pPOI->x,pPOI->y,pPOI->distanceMM,pPOI->calibrationDistMM,pPOI->distanceMM - pPOI->calibrationDistMM);
                 suppressedX = pPOI->x;
                 suppressedY = pPOI->y;
             }
@@ -440,7 +496,7 @@ int TPP_TOF::prettyPrint(int32_t dataArray[]) {
 
     int lines = 0;
     Serial.print("\t        ");
-    for (int i = 0; i < imageWidth; i++) {
+    for (int i = imageWidth-1; i >= 0; i--) {
         Serial.printf("%-5i",i);
     }
     Serial.println();

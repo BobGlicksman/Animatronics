@@ -64,7 +64,7 @@ const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't nee
         ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
         ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
         ,{"comm.protocol", LOG_LEVEL_WARN}          // particle communication system 
-        ,{"app.TOF", LOG_LEVEL_INFO}
+        ,{"app.TOF", LOG_LEVEL_TRACE}
     });
 #else
     SerialLogHandler logHandler1(LOG_LEVEL_ERROR, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
@@ -308,15 +308,15 @@ void loop() {
 
         //smallestValue = thisPOI.distanceMM;
 
-        // XXXX call function to process the TOF data for event publication
-
-        processEvents(focusX, focusY, thisPOI.distanceMM);
-
         // do we have a focus point?
         if (thisPOI.hasDetection) {
 
             focusX = thisPOI.x;
             focusY = thisPOI.y;
+
+            // XXXX call function to process the TOF data for event publication
+
+            processEvents(focusX, focusY, thisPOI.distanceMM);
 
             lastEyeUpdateMS = millis();
 
