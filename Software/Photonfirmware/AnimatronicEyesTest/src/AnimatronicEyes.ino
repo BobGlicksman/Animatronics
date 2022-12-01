@@ -36,7 +36,7 @@
  */ 
 
 
-const String version = "1.8";
+const String version = "1.9";
  
 //SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
