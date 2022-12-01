@@ -354,6 +354,7 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
                             && (validate(score))                                 // has at least x adjacent zones with valid distances 
                             && (adjustedData[thisZone] < calibration[thisZone])   // closer than our calibration frame (this does not seem to matter)
                             && (adjustedData[thisZone] < pPOI->distanceMM)       // closer than current closest pPOI
+                            && (avgDistThisZone > NOISE_RANGE)
                             ) {
                         // this pPOI will be the one closest to the sensor
                         pPOI->x  = x;
