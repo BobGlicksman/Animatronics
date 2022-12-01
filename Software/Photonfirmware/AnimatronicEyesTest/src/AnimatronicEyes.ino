@@ -14,6 +14,9 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2022 Bob Glicksman and Jim Schrempp
  * 
+ * v1.9 temporal filtering now requires 2 frames of the same x,y 
+ *      calibration now looks for several close frames
+ *      changed pretty print x titles of calibration array to be correct 
  *      added temporal filtering
  * v1.8 changed the TOF upload time in loop to be longer (25 ms)
  * v1.7 add TOF event processing
@@ -64,7 +67,7 @@ const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't nee
         ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
         ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
         ,{"comm.protocol", LOG_LEVEL_WARN}          // particle communication system 
-        ,{"app.TOF", LOG_LEVEL_INFO}
+        ,{"app.TOF", LOG_LEVEL_TRACE}
     });
 #else
     SerialLogHandler logHandler1(LOG_LEVEL_ERROR, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
@@ -192,6 +195,12 @@ void animationTimerCallback() {
     }
 }
 
+// Cloud functions must return int and take one String
+int restartDevice(String extra) {
+    System.reset();
+    return 0;
+}
+
 //------ setup -----------
 void setup() {
 
@@ -199,6 +208,8 @@ void setup() {
     pinMode(KILL_BUTTON_PIN,INPUT_PULLUP);
 
     pinMode(D7, OUTPUT);
+
+    Particle.function("restart device", restartDevice);
 
     delay(1000);
     mainLog.info("===========================================");
@@ -300,15 +311,15 @@ void loop() {
 
         //smallestValue = thisPOI.distanceMM;
 
-        // XXXX call function to process the TOF data for event publication
-
-        processEvents(focusX, focusY, thisPOI.distanceMM);
-
         // do we have a focus point?
         if (thisPOI.hasDetection) {
 
             focusX = thisPOI.x;
             focusY = thisPOI.y;
+
+            // XXXX call function to process the TOF data for event publication
+
+            processEvents(focusX, focusY, thisPOI.distanceMM);
 
             lastEyeUpdateMS = millis();
 
