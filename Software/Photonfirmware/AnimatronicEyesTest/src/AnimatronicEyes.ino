@@ -67,6 +67,7 @@ const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't nee
         ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
         ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
         ,{"comm.protocol", LOG_LEVEL_WARN}          // particle communication system 
+        ,{"comm.dtls", LOG_LEVEL_WARN}          // particle communication system 
         ,{"app.TOF", LOG_LEVEL_TRACE}
     });
 #else
@@ -75,7 +76,8 @@ const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't nee
         ,{ "app.puppet", LOG_LEVEL_ERROR }               // Logging for Animate puppet methods
         ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
         ,{ "app.aniservo", LOG_LEVEL_ERROR }          // Logging for Animate Servo details
-        ,{"comm.protocol", LOG_LEVEL_ERROR}          // particle communication system 
+        ,{"comm.protocol", LOG_LEVEL_WARN}          // particle communication system 
+        ,{"comm.dtls", LOG_LEVEL_ERROR}          // particle communication system 
         ,{"app.TOF", LOG_LEVEL_TRACE}
         
     });
@@ -311,15 +313,21 @@ void loop() {
 
         //smallestValue = thisPOI.distanceMM;
 
+        // XXXX call function to process the TOF data for event publication
+
+        // xxx this is a hack for now. 
+        // xxx  we should really pass thisPOI into processEvents and let it make decisions
+        if (thisPOI.hasDetection) {
+            processEvents(thisPOI.x, thisPOI.y, thisPOI.distanceMM);
+        } else {
+            processEvents(-1, -1, thisPOI.distanceMM);
+        }
+        
         // do we have a focus point?
         if (thisPOI.hasDetection) {
 
             focusX = thisPOI.x;
             focusY = thisPOI.y;
-
-            // XXXX call function to process the TOF data for event publication
-
-            processEvents(focusX, focusY, thisPOI.distanceMM);
 
             lastEyeUpdateMS = millis();
 
