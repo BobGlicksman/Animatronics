@@ -14,6 +14,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2022 Bob Glicksman and Jim Schrempp
  * 
+ *      temporal filtering now allows a bit of spatial jittering. fixes "goodbye" while standing in front of head
  * v1.9 temporal filtering now requires 2 frames of the same x,y 
  *      calibration now looks for several close frames
  *      changed pretty print x titles of calibration array to be correct 
@@ -66,8 +67,7 @@ const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't nee
         ,{ "app.puppet", LOG_LEVEL_INFO }               // Logging for Animate puppet methods
         ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
         ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
-        ,{"comm.protocol", LOG_LEVEL_WARN}          // particle communication system 
-        ,{"comm.dtls", LOG_LEVEL_WARN}          // particle communication system 
+        ,{"comm", LOG_LEVEL_ERROR}         // particle communication system 
         ,{"app.TOF", LOG_LEVEL_TRACE}
     });
 #else
@@ -126,13 +126,15 @@ void processEvents(int32_t xFocus, int32_t yFocus, int32_t distance) {
             timeEyesOpened = millis();
             eventTypeAsString = String(Person_entered_fov);
             Particle.publish("TOF_event", eventTypeAsString);
+            mainLog.trace("EVENT: Person Entered FOV");
             return;
         }
         else {      // someone is in the fov for a while, test for too close
             if( (distance < TOO_CLOSE) && ((millis() - timeTooClose) > LAST_TIME_TOO_CLOSE) ) {
                 timeTooClose = millis();
                 eventTypeAsString = String(Person_too_close);
-                Particle.publish("TOF_event", eventTypeAsString);  
+                Particle.publish("TOF_event", eventTypeAsString); 
+                mainLog.trace("EVENT: Person Too Close"); 
                 return;             
             }
         }
@@ -143,11 +145,13 @@ void processEvents(int32_t xFocus, int32_t yFocus, int32_t distance) {
             if( (millis() - timeEyesOpened) > TOO_SOON) {   // person  in fov for a "decent" amount of time
                 eventTypeAsString = String(Person_left_fov);
                 Particle.publish("TOF_event", eventTypeAsString);  
+                mainLog.trace("Person Left FOV");
                 return; 
             }
             else {      // person in fov for only a short time
                 eventTypeAsString = String(Person_left_quickly);
                 Particle.publish("TOF_event", eventTypeAsString);  
+                mainLog.trace("Person Left FOV Quickly");
                 return;
             }
 
@@ -316,15 +320,19 @@ void loop() {
         // XXXX call function to process the TOF data for event publication
 
         // xxx this is a hack for now. 
-        // xxx  we should really pass thisPOI into processEvents and let it make decisions
-        if (thisPOI.hasDetection) {
-            processEvents(thisPOI.x, thisPOI.y, thisPOI.distanceMM);
-        } else {
-            processEvents(-1, -1, thisPOI.distanceMM);
+            // xxx  we should really pass thisPOI into processEvents and let it make decisions
+        if (thisPOI.gotNewSensorData) {
+            if (thisPOI.hasDetection) {
+                processEvents(thisPOI.x, thisPOI.y, thisPOI.distanceMM);
+            } else {
+                processEvents(-1, -1, thisPOI.distanceMM);
+            }
         }
         
         // do we have a focus point?
         if (thisPOI.hasDetection) {
+
+        
 
             focusX = thisPOI.x;
             focusY = thisPOI.y;

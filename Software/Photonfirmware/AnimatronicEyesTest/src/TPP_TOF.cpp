@@ -447,7 +447,10 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
             suppressedY = -1;
         } 
         
-        if ((currentX == pPOI->x) && (currentY == pPOI->y)) {
+        // allow some spatial jitter
+        int spatialDistX = 0 ;  //currentX - pPOI->x;
+        int spatialDistY = 0 ;  //currentY - pPOI->y;
+        if ((spatialDistX < 2) && (spatialDistY < 2)) {
             // same x,y so increment frame counter
             sequentialFramesWithHit++;
         } else {
