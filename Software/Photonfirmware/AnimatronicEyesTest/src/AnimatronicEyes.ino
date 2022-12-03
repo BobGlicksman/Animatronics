@@ -36,17 +36,16 @@
  *    
  */ 
 
-
-const String version = "1.9";
- 
-//SYSTEM_MODE(MANUAL);
-SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
-
 #include <Wire.h>
 #include <TPPAnimationList.h>
 #include <TPPAnimatePuppet.h>
 #include <eyeservosettings.h>
 #include <TPP_TOF.h>
+
+const String version = "1.9";
+
+//SYSTEM_MODE(MANUAL);
+SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
 
 // Only ONE of these, please
 #define TOF_USE 1
@@ -99,7 +98,7 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 
 //------------- XXX processEvents ------------------
 // evaluate the TOF sensor results to determine if a mouth event is to be published, and publish the resulting event
-void processEvents(int32_t xFocus, int32_t yFocus, int32_t distance) {
+void processEvents(pointOfInterest POI) {
     // event declaration
     enum TOF_detect {
         Person_entered_fov = 1,   // empty FOV goes to a valid detection in any zone
@@ -119,44 +118,48 @@ void processEvents(int32_t xFocus, int32_t yFocus, int32_t distance) {
     static unsigned long timeTooClose = 0;
     String eventTypeAsString = "";
 
-    // test to see if the sensor detects a valid object in the fov
-    if ((xFocus >= 0) && (yFocus >= 0)) {       // valid object in fov
-        if(eyesOpenLast == false) {     // someone just entered the fov; send entered event
-            eyesOpenLast = true;    // log that eyes are open
-            timeEyesOpened = millis();
-            eventTypeAsString = String(Person_entered_fov);
-            Particle.publish("TOF_event", eventTypeAsString);
-            mainLog.trace("EVENT: Person Entered FOV");
-            return;
-        }
-        else {      // someone is in the fov for a while, test for too close
-            if( (distance < TOO_CLOSE) && ((millis() - timeTooClose) > LAST_TIME_TOO_CLOSE) ) {
-                timeTooClose = millis();
-                eventTypeAsString = String(Person_too_close);
-                Particle.publish("TOF_event", eventTypeAsString); 
-                mainLog.trace("EVENT: Person Too Close"); 
-                return;             
-            }
-        }
-    }
-    else {      //no valid object in fov
-        if(eyesOpenLast == true) {  // eyes just closed
-            eyesOpenLast = false;   // log that eyes are closed
-            if( (millis() - timeEyesOpened) > TOO_SOON) {   // person  in fov for a "decent" amount of time
-                eventTypeAsString = String(Person_left_fov);
-                Particle.publish("TOF_event", eventTypeAsString);  
-                mainLog.trace("Person Left FOV");
-                return; 
-            }
-            else {      // person in fov for only a short time
-                eventTypeAsString = String(Person_left_quickly);
-                Particle.publish("TOF_event", eventTypeAsString);  
-                mainLog.trace("Person Left FOV Quickly");
+
+    if (POI.gotNewSensorData) {
+                
+        // test to see if the sensor detects a valid object in the fov
+        if (POI.hasDetection) {     // valid object in fov
+            if(eyesOpenLast == false) {     // someone just entered the fov; send entered event
+                eyesOpenLast = true;    // log that eyes are open
+                timeEyesOpened = millis();
+                eventTypeAsString = String(Person_entered_fov);
+                Particle.publish("TOF_event", eventTypeAsString);
+                mainLog.trace("EVENT: Person Entered FOV");
                 return;
             }
-
+            else {      // someone is in the fov for a while, test for too close
+                if( (POI.distanceMM < TOO_CLOSE) && ((millis() - timeTooClose) > LAST_TIME_TOO_CLOSE) ) {
+                    timeTooClose = millis();
+                    eventTypeAsString = String(Person_too_close);
+                    Particle.publish("TOF_event", eventTypeAsString); 
+                    mainLog.trace("EVENT: Person Too Close"); 
+                    return;             
+                }
+            }
         }
-        return;
+        else {      //no valid object in fov
+            if(eyesOpenLast == true) {  // eyes just closed
+                eyesOpenLast = false;   // log that eyes are closed
+                if( (millis() - timeEyesOpened) > TOO_SOON) {   // person  in fov for a "decent" amount of time
+                    eventTypeAsString = String(Person_left_fov);
+                    Particle.publish("TOF_event", eventTypeAsString);  
+                    mainLog.trace("Person Left FOV");
+                    return; 
+                }
+                else {      // person in fov for only a short time
+                    eventTypeAsString = String(Person_left_quickly);
+                    Particle.publish("TOF_event", eventTypeAsString);  
+                    mainLog.trace("Person Left FOV Quickly");
+                    return;
+                }
+
+            }
+            return;
+        }
     }
     // if nothing to do, just return
     return;
@@ -317,22 +320,11 @@ void loop() {
 
         //smallestValue = thisPOI.distanceMM;
 
-        // XXXX call function to process the TOF data for event publication
-
-        // xxx this is a hack for now. 
-            // xxx  we should really pass thisPOI into processEvents and let it make decisions
-        if (thisPOI.gotNewSensorData) {
-            if (thisPOI.hasDetection) {
-                processEvents(thisPOI.x, thisPOI.y, thisPOI.distanceMM);
-            } else {
-                processEvents(-1, -1, thisPOI.distanceMM);
-            }
-        }
+        // call function to process the TOF data for event publication
+        processEvents(thisPOI);
         
         // do we have a focus point?
         if (thisPOI.hasDetection) {
-
-        
 
             focusX = thisPOI.x;
             focusY = thisPOI.y;
