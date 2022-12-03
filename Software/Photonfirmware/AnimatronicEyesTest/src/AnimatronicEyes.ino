@@ -102,7 +102,7 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 void processEvents(pointOfInterest POI) {
 
     // local constants
-    const unsigned int TOO_CLOSE = 254;  // object is too close if < 254 mm = 10"
+    const long TOO_CLOSE = 254;  // object is too close if < 254 mm = 10"
     const unsigned long LAST_TIME_TOO_CLOSE = 10000;    // time out for repeat of too close event - 10 seconds
     const unsigned long TOO_SOON = 15000;   // 15 sec is the minimum time for a "valid" engagement
     
@@ -272,8 +272,6 @@ void loop() {
 
     static bool firstLoop = true;
     static bool startingUp = true;
-    static bool mouthTriggered = false;
-    static long lastIdleSequenceStartTime = 0;
 
     if (firstLoop){
 
@@ -364,6 +362,9 @@ void loop() {
 #else
 
 #ifndef VERIFY_CALIBRATION_ONLY
+
+    static bool mouthTriggered = false;
+    static long lastIdleSequenceStartTime = 0;
 
     static bool weAreAlive = true; // when true we will not run
 
