@@ -41,6 +41,7 @@
 #include <TPPAnimatePuppet.h>
 #include <eyeservosettings.h>
 #include <TPP_TOF.h>
+#include <TPP_Animatronic_Global.h>
 
 const String version = "1.9";
 
@@ -99,13 +100,6 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 //------------- XXX processEvents ------------------
 // evaluate the TOF sensor results to determine if a mouth event is to be published, and publish the resulting event
 void processEvents(pointOfInterest POI) {
-    // event declaration
-    enum TOF_detect {
-        Person_entered_fov = 1,   // empty FOV goes to a valid detection in any zone
-        Person_left_fov = 2,      // valid detection in any zone goes to empty FOV
-        Person_too_close = 3,     // smallest distance is < TOO_CLOSE mm
-        Person_left_quickly = 4   // same as #2 but FOV was vacated in a short time period
-    };
 
     // local constants
     const unsigned int TOO_CLOSE = 254;  // object is too close if < 254 mm = 10"
