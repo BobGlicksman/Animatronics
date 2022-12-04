@@ -14,6 +14,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2022 Bob Glicksman and Jim Schrempp
  * 
+ *      altered some variable names in processEvents(). No function change 
  *      temporal filtering now allows a bit of spatial jittering. fixes "goodbye" while standing in front of head
  * v1.9 temporal filtering now requires 2 frames of the same x,y 
  *      calibration now looks for several close frames
@@ -102,13 +103,13 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 void processEvents(pointOfInterest POI) {
 
     // local constants
-    const long TOO_CLOSE = 254;  // object is too close if < 254 mm = 10"
-    const unsigned long LAST_TIME_TOO_CLOSE = 10000;    // time out for repeat of too close event - 10 seconds
-    const unsigned long TOO_SOON = 15000;   // 15 sec is the minimum time for a "valid" engagement
-    
+    const long TOO_CLOSE_MM = 254;  // object is too close if < 254 mm = 10"
+    const unsigned long SUPPRESS_TOO_CLOSE_MS = 10000;    // time out for repeat of too close event - 10 seconds
+    const unsigned long VALID_ENGAGEMENT_MS = 15000;   // 15 sec is the minimum time for a "valid" engagement
+
     // local variables
-    static bool eyesOpenLast = false;   // true of the eyes were open the last time through
-    static unsigned long timeEyesOpened = millis();
+    static bool personInFOV = false;   // true of the eyes were open the last time through
+    static unsigned long personEnteredFOVMS = millis();
     static unsigned long timeTooClose = 0;
     String eventTypeAsString = "";
 
@@ -117,16 +118,19 @@ void processEvents(pointOfInterest POI) {
                 
         // test to see if the sensor detects a valid object in the fov
         if (POI.hasDetection) {     // valid object in fov
-            if(eyesOpenLast == false) {     // someone just entered the fov; send entered event
-                eyesOpenLast = true;    // log that eyes are open
-                timeEyesOpened = millis();
+            if(personInFOV == false) {    
+                // someone just entered the fov; send entered event
+                personInFOV = true;    // note that person is in FOV
+                personEnteredFOVMS = millis();
                 eventTypeAsString = String(Person_entered_fov);
                 Particle.publish("TOF_event", eventTypeAsString);
                 mainLog.trace("EVENT: Person Entered FOV");
                 return;
             }
-            else {      // someone is in the fov for a while, test for too close
-                if( (POI.distanceMM < TOO_CLOSE) && ((millis() - timeTooClose) > LAST_TIME_TOO_CLOSE) ) {
+            else {      
+                // someone is in the fov for two invocations, test for too close
+                if( (POI.distanceMM < TOO_CLOSE_MM) && ((millis() - timeTooClose) > SUPPRESS_TOO_CLOSE_MS) ) {
+                    // don't do this too often
                     timeTooClose = millis();
                     eventTypeAsString = String(Person_too_close);
                     Particle.publish("TOF_event", eventTypeAsString); 
@@ -135,10 +139,13 @@ void processEvents(pointOfInterest POI) {
                 }
             }
         }
-        else {      //no valid object in fov
-            if(eyesOpenLast == true) {  // eyes just closed
-                eyesOpenLast = false;   // log that eyes are closed
-                if( (millis() - timeEyesOpened) > TOO_SOON) {   // person  in fov for a "decent" amount of time
+        else {      
+            //no valid object in fov
+            if(personInFOV == true) {  
+                // Person has left FOV
+                personInFOV = false;   // note that FOV is empty
+                if( (millis() - personEnteredFOVMS) > VALID_ENGAGEMENT_MS) {   
+                    // person  in fov for a "decent" amount of time
                     eventTypeAsString = String(Person_left_fov);
                     Particle.publish("TOF_event", eventTypeAsString);  
                     mainLog.trace("Person Left FOV");
