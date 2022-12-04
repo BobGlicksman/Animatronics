@@ -306,6 +306,8 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
     pPOI->calibrationDistMM = -1;
 
     int32_t adjustedData[imageResolution];
+
+#ifdef CONTINUOUS_DEBUG_DISPLAY
     int32_t secondTable[imageResolution];   // second table to print out
     String secondTableTitle = ""; // will hold title of second table 
 
@@ -313,6 +315,7 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
     for (int i = 0; i<imageResolution; i++) {
         secondTable[i] = 0;
     }
+#endif
   
     //Poll sensor for new data.  Adjust if close to calibration value
     
@@ -343,9 +346,9 @@ void TPP_TOF::getPOI(pointOfInterest *pPOI){
                     int avgDistThisZone = avgdistZone(thisZone, adjustedData);
 
                     int score = scoreZone(thisZone, adjustedData);
-
+#ifdef CONTINUOUS_DEBUG_DISPLAY
                     secondTable[thisZone] = avgDistThisZone; 
-
+#endif
                     // test for the smallest value that is a significant zone
                     //if( (avgDistThisZone > NOISE_RANGE) && (avgDistThisZone < smallestValue) &&
                     //    (validate(score) == true) ) {
@@ -476,7 +479,7 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
 
         } else {
             // valid point, but not persistent so suppress this detection
-            pPOI->hasDetection = false; 
+            pPOI->hasDetection =  false; 
 
             // logging
             if((suppressedX != pPOI->x) && (suppressedY != pPOI->y) ) {
