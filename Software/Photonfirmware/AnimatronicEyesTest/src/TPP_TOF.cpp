@@ -57,7 +57,9 @@ void TPP_TOF::initTOF(){
     Serial.println("Initializing sensor board. This can take up to 10s. Please wait.");
     if (myImager.begin() == false) {
         Serial.println(F("Sensor not found - check your wiring. Freezing"));
-        while (1) ;
+        while (1) {
+            delay(10); // allow remote reset to happen
+        } ;
     }
     
     myImager.setResolution(64); //Enable all 64 pads - 8 x 8 array of readings
@@ -473,7 +475,7 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
             // we'll return the POI that we got
 
             // logging
-            theLogger.trace("temporal filter returns point (%4i, %4i) dist: %ld calib: %d deltaDist: %ld frames: %d surrounding: %d", 
+            theLogger.trace("temporal filter returns point (%4i, %4i) dist: %d calib: %d deltaDist: %d frames: %d surrounding: %d", 
                 pPOI->x, pPOI->y, pPOI->distanceMM, pPOI->calibrationDistMM, pPOI->distanceMM - pPOI->calibrationDistMM,
                  sequentialFramesWithHit, pPOI->surroundingHits);
 
@@ -484,7 +486,7 @@ void TPP_TOF::getPOITemporalFiltered(pointOfInterest *pPOI) {
             // logging
             if((suppressedX != pPOI->x) && (suppressedY != pPOI->y) ) {
                 // only report once for each x,y
-                theLogger.trace("POI suppressed (%4i, %4i) dist: %ld  calib: %d  delta: %ld", 
+                theLogger.trace("POI suppressed (%4i, %4i) dist: %d  calib: %d  delta: %d", 
                     pPOI->x,pPOI->y,pPOI->distanceMM,pPOI->calibrationDistMM,pPOI->distanceMM - pPOI->calibrationDistMM);
                 suppressedX = pPOI->x;
                 suppressedY = pPOI->y;

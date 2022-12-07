@@ -12,6 +12,7 @@
 
 // define enumerated events reported from the eyes code
 enum TOF_detect {
+    No_event    = -1,         // used to indicate that there is no event to deal with
     No_change_in_fov = 0,
     Person_entered_fov = 1,   // empty FOV goes to a valid detection in any zone
     Person_left_fov = 2,      // valid detection in any zone goes to empty FOV
