@@ -294,14 +294,14 @@ void processEvents2(bool hasDetection, int distanceMM) {
     if (speakThisEvent != No_event) {
         String eventTypeAsString = String(speakThisEvent);
         publishEvent("TOF_event", eventTypeAsString); 
-        mainLog.trace("Event sent: " + eventTypeAsString);
+        mainLog.trace("2 Event sent: " + eventTypeAsString);
     }
 
     // logging
     static headStates lastLoggedState;
     if (lastLoggedState != currentState) {
         lastLoggedState = currentState;
-        mainLog.trace("HeadState: " + headStatesStrings[currentState-1]);
+        mainLog.trace("2 HeadState: " + headStatesStrings[currentState-1]);
     }
 
     return;
@@ -366,7 +366,7 @@ int restartDevice(String extra) {
 }
 
 int setProcessEventFunction(String extra) {
-    if (extra.length() >0){
+    if (extra.length() > 0){
         processEventFunction = extra.toInt();
          mainLog.trace("Using event function %d", processEventFunction);
     }
@@ -476,23 +476,24 @@ void loop() {
     if ( (millis() - lastEyeUpdateMS) > TOF_SAMPLE_TIME){    // XXX made this longer than 1 ms
 
         // this is called every time to allow TOF to make measurements
-        pointOfInterest thisPOI;
+        pointOfInterest thisPOITF;
 
         //theTOF.getPOI(&thisPOI);
-        theTOF.getPOITemporalFiltered(&thisPOI);
+        theTOF.getPOITemporalFiltered(&thisPOITF);
 
-        if (thisPOI.gotNewSensorData) {
+        if (thisPOITF.gotNewSensorData) {
             // call function to process the TOF data for event publication
             if (processEventFunction == 2) {
                 // use alternative function
-                processEvents2(thisPOI.hasDetection, thisPOI.distanceMM);
+                processEvents2(thisPOITF.hasDetection, thisPOITF.distanceMM);
             } else {
-                processEvents(thisPOI);
+                processEvents(thisPOITF);
             }
         }
 
         //smallestValue = thisPOI.distanceMM;
         // get POI data without temporal filtering
+        pointOfInterest thisPOI;
         theTOF.getPOI(&thisPOI);
 
         // do we have a focus point?
