@@ -14,6 +14,9 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2022 Bob Glicksman and Jim Schrempp
  * 
+ * v2.0 added second speak function, invoked by cloud function "event algorithm" set to 2
+ *      faster eyes sample rate from 25ms to 10ms
+ *      altered some variable names in processEvents(). No function change 
  *      temporal filtering now allows a bit of spatial jittering. fixes "goodbye" while standing in front of head
  * v1.9 temporal filtering now requires 2 frames of the same x,y 
  *      calibration now looks for several close frames
@@ -43,7 +46,9 @@
 #include <TPP_TOF.h>
 #include <TPP_Animatronic_Global.h>
 
-const String version = "1.9";
+const String version = "2.0";
+int processEventFunction = 1;
+
 
 //SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
@@ -59,16 +64,16 @@ TPP_TOF theTOF;
 #define KILL_BUTTON_PIN A4
 
 const long IDLE_SEQUENCE_MIN_WAIT_MS = 10000; //30 sec // during idle times, random activity will happen longer than this
-const long TOF_SAMPLE_TIME = 25;   // the TOF only updated 10x/sec, so don't need to upload the TOF data very often
+const long TOF_SAMPLE_TIME = 10;   // the TOF only updated 10x/sec, so don't need to upload the TOF data very often
 
 #ifdef DEBUGON
     SerialLogHandler logHandler1(LOG_LEVEL_INFO, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
         { "app.main", LOG_LEVEL_ALL }               // Logging for main loop
-        ,{ "app.puppet", LOG_LEVEL_INFO }               // Logging for Animate puppet methods
+        ,{ "app.puppet", LOG_LEVEL_WARN }               // Logging for Animate puppet methods
         ,{ "app.anilist", LOG_LEVEL_ERROR }               // Logging for Animation List methods
         ,{ "app.aniservo", LOG_LEVEL_INFO }          // Logging for Animate Servo details
         ,{"comm", LOG_LEVEL_ERROR}         // particle communication system 
-        ,{"app.TOF", LOG_LEVEL_TRACE}
+        ,{"app.TOF", LOG_LEVEL_WARN}
     });
 #else
     SerialLogHandler logHandler1(LOG_LEVEL_ERROR, {  // Logging level for non-application messages LOG_LEVEL_ALL or _INFO
@@ -102,13 +107,13 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 void processEvents(pointOfInterest POI) {
 
     // local constants
-    const long TOO_CLOSE = 254;  // object is too close if < 254 mm = 10"
-    const unsigned long LAST_TIME_TOO_CLOSE = 10000;    // time out for repeat of too close event - 10 seconds
-    const unsigned long TOO_SOON = 15000;   // 15 sec is the minimum time for a "valid" engagement
-    
+    const long TOO_CLOSE_MM = 254;  // object is too close if < 254 mm = 10"
+    const unsigned long SUPPRESS_TOO_CLOSE_MS = 10000;    // time out for repeat of too close event - 10 seconds
+    const unsigned long VALID_ENGAGEMENT_MS = 15000;   // 15 sec is the minimum time for a "valid" engagement
+
     // local variables
-    static bool eyesOpenLast = false;   // true of the eyes were open the last time through
-    static unsigned long timeEyesOpened = millis();
+    static bool personInFOV = false;   // true of the eyes were open the last time through
+    static unsigned long personEnteredFOVMS = millis();
     static unsigned long timeTooClose = 0;
     String eventTypeAsString = "";
 
@@ -117,16 +122,19 @@ void processEvents(pointOfInterest POI) {
                 
         // test to see if the sensor detects a valid object in the fov
         if (POI.hasDetection) {     // valid object in fov
-            if(eyesOpenLast == false) {     // someone just entered the fov; send entered event
-                eyesOpenLast = true;    // log that eyes are open
-                timeEyesOpened = millis();
+            if(personInFOV == false) {    
+                // someone just entered the fov; send entered event
+                personInFOV = true;    // note that person is in FOV
+                personEnteredFOVMS = millis();
                 eventTypeAsString = String(Person_entered_fov);
                 Particle.publish("TOF_event", eventTypeAsString);
                 mainLog.trace("EVENT: Person Entered FOV");
                 return;
             }
-            else {      // someone is in the fov for a while, test for too close
-                if( (POI.distanceMM < TOO_CLOSE) && ((millis() - timeTooClose) > LAST_TIME_TOO_CLOSE) ) {
+            else {      
+                // someone is in the fov for two invocations, test for too close
+                if( (POI.distanceMM < TOO_CLOSE_MM) && ((millis() - timeTooClose) > SUPPRESS_TOO_CLOSE_MS) ) {
+                    // don't do this too often
                     timeTooClose = millis();
                     eventTypeAsString = String(Person_too_close);
                     Particle.publish("TOF_event", eventTypeAsString); 
@@ -135,10 +143,13 @@ void processEvents(pointOfInterest POI) {
                 }
             }
         }
-        else {      //no valid object in fov
-            if(eyesOpenLast == true) {  // eyes just closed
-                eyesOpenLast = false;   // log that eyes are closed
-                if( (millis() - timeEyesOpened) > TOO_SOON) {   // person  in fov for a "decent" amount of time
+        else {      
+            //no valid object in fov
+            if(personInFOV == true) {  
+                // Person has left FOV
+                personInFOV = false;   // note that FOV is empty
+                if( (millis() - personEnteredFOVMS) > VALID_ENGAGEMENT_MS) {   
+                    // person  in fov for a "decent" amount of time
                     eventTypeAsString = String(Person_left_fov);
                     Particle.publish("TOF_event", eventTypeAsString);  
                     mainLog.trace("Person Left FOV");
@@ -159,6 +170,143 @@ void processEvents(pointOfInterest POI) {
     return;
 
 }   // end of processEvents()
+
+void processEvents2(bool hasDetection, int distanceMM) {
+
+    enum headStates {
+        hs_idle  = 1,
+        hs_normal = 2,
+        hs_too_close = 3,
+        hs_person_left = 4
+    };
+    static headStates currentState = hs_idle;
+    String headStatesStrings[4] = {"Idle","Normal","Too Close","Person left"};
+
+    // local constants
+    const long TOO_CLOSE_MM = 254;  // object is too close if < 254 mm = 10"
+    const unsigned long VALID_ENGAGEMENT_MS = 15000;   // 15 sec is the minimum time for a "valid" engagement
+    const long MIN_TIME_FOR_NEW_WELCOME = 30000;  // don't welcome more frequently than this
+
+    // local variables
+    bool personTooClose = false;
+    unsigned long currentMS = millis();
+    static unsigned long stateStartMS = 0;
+    unsigned long timeInStateMS = currentMS - stateStartMS;
+    TOF_detect speakThisEvent = No_event;
+
+    if (hasDetection && (distanceMM < TOO_CLOSE_MM)) {
+        personTooClose = true;
+    }
+
+    switch(currentState) {
+        case hs_idle:
+            if (hasDetection == false) {
+                // stay in this state
+            }
+            if (hasDetection) {
+                stateStartMS = currentMS;
+                if (personTooClose) {
+                    // speak too close event
+                    speakThisEvent = Person_too_close;
+                    currentState = hs_too_close;
+                } else {
+                    // speak welcome event
+                    speakThisEvent = Person_entered_fov;
+                    currentState = hs_normal;
+                }
+            break;
+
+        case hs_normal:
+            if (hasDetection) {
+                if (personTooClose) {
+                    // speak too close
+                    speakThisEvent = Person_too_close;
+                    stateStartMS = currentMS;
+                    currentState = hs_too_close;
+                } else {
+                    // stay in this state
+                }
+            }
+            
+            if (!hasDetection) {
+                if (timeInStateMS < VALID_ENGAGEMENT_MS) {
+                    // speak quick goodbye
+                    speakThisEvent = Person_left_quickly;
+                    stateStartMS = currentMS;
+                    currentState = hs_person_left;
+                } else {
+                if (timeInStateMS >= VALID_ENGAGEMENT_MS) {
+                    // speak normal goodbye
+                    speakThisEvent = Person_left_fov;
+                    stateStartMS = currentMS;
+                    currentState = hs_person_left;
+                    }
+                }
+            }
+            break;
+
+        case hs_too_close:
+            if (personTooClose) {
+                // stay in this state
+            } else {
+                if (hasDetection) {
+                    // speak nothing
+                    stateStartMS = currentMS;
+                    currentState = hs_normal;
+                }
+            }
+
+            if (!hasDetection) {
+                if (timeInStateMS < VALID_ENGAGEMENT_MS) {
+                    // speak quick goodbye
+                    speakThisEvent = Person_left_quickly;
+                    stateStartMS = currentMS;
+                    currentState = hs_person_left;
+                } else {
+                    // speak normal goodbye
+                    speakThisEvent = Person_left_fov;
+                    stateStartMS = currentMS;
+                    currentState = hs_person_left;
+                    }
+                }
+            }
+            break;
+
+        case hs_person_left:
+            if (hasDetection) {
+                // speak nothing
+                currentState = hs_normal;
+            } else {
+                if (timeInStateMS < MIN_TIME_FOR_NEW_WELCOME ) {
+                    // stay in this state so we don't welcome again
+                } else {
+                    // speak nothing
+                    currentState = hs_idle;
+                    stateStartMS = currentMS;
+                }
+            }
+            break;
+        default:
+            break;
+    } // end of switch
+    
+    // send event to the mouth
+    if (speakThisEvent != No_event) {
+        String eventTypeAsString = String(speakThisEvent);
+        publishEvent("TOF_event", eventTypeAsString); 
+        mainLog.trace("2 Event sent: " + eventTypeAsString);
+    }
+
+    // logging
+    static headStates lastLoggedState;
+    if (lastLoggedState != currentState) {
+        lastLoggedState = currentState;
+        mainLog.trace("2 HeadState: " + headStatesStrings[currentState-1]);
+    }
+
+    return;
+
+}   // end of processEvents2()
 
 
 //------- midValue --------
@@ -198,11 +346,33 @@ void animationTimerCallback() {
     }
 }
 
+void publishEvent(String eventName, String eventData) {
+
+    static unsigned long lastPublishedMS = 0;
+    if (millis() - lastPublishedMS > 1000) {
+        Particle.publish(eventName, eventData);
+        lastPublishedMS = millis();
+    } else {
+        mainLog.error("Publication suppressed, too fast: " + eventName + "/" + eventData );
+    }
+
+}
+
+
 // Cloud functions must return int and take one String
 int restartDevice(String extra) {
     System.reset();
     return 0;
 }
+
+int setProcessEventFunction(String extra) {
+    if (extra.length() > 0){
+        processEventFunction = extra.toInt();
+         mainLog.trace("Using event function %d", processEventFunction);
+    }
+    return processEventFunction;
+}
+
 
 //------ setup -----------
 void setup() {
@@ -213,6 +383,7 @@ void setup() {
     pinMode(D7, OUTPUT);
 
     Particle.function("restart device", restartDevice);
+    Particle.function("event algorithm", setProcessEventFunction);
 
     delay(1000);
     mainLog.info("===========================================");
@@ -305,16 +476,26 @@ void loop() {
     if ( (millis() - lastEyeUpdateMS) > TOF_SAMPLE_TIME){    // XXX made this longer than 1 ms
 
         // this is called every time to allow TOF to make measurements
-        pointOfInterest thisPOI;
+        pointOfInterest thisPOITF;
 
         //theTOF.getPOI(&thisPOI);
-        theTOF.getPOITemporalFiltered(&thisPOI);
+        theTOF.getPOITemporalFiltered(&thisPOITF);
+
+        if (thisPOITF.gotNewSensorData) {
+            // call function to process the TOF data for event publication
+            if (processEventFunction == 2) {
+                // use alternative function
+                processEvents2(thisPOITF.hasDetection, thisPOITF.distanceMM);
+            } else {
+                processEvents(thisPOITF);
+            }
+        }
 
         //smallestValue = thisPOI.distanceMM;
+        // get POI data without temporal filtering
+        pointOfInterest thisPOI;
+        theTOF.getPOI(&thisPOI);
 
-        // call function to process the TOF data for event publication
-        processEvents(thisPOI);
-        
         // do we have a focus point?
         if (thisPOI.hasDetection) {
 
