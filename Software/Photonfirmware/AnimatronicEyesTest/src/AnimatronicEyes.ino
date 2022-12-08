@@ -200,9 +200,6 @@ void processEvents2(bool hasDetection, int distanceMM) {
 
     switch(currentState) {
         case hs_idle:
-            if (hasDetection == false) {
-                // stay in this state
-            }
             if (hasDetection) {
                 stateStartMS = currentMS;
                 if (personTooClose) {
@@ -221,52 +218,42 @@ void processEvents2(bool hasDetection, int distanceMM) {
                 if (personTooClose) {
                     // speak too close
                     speakThisEvent = Person_too_close;
-                    stateStartMS = currentMS;
                     currentState = hs_too_close;
-                } else {
-                    // stay in this state
-                }
+                } 
             }
             
             if (!hasDetection) {
+                stateStartMS = currentMS;
+                currentState = hs_person_left;
                 if (timeInStateMS < VALID_ENGAGEMENT_MS) {
                     // speak quick goodbye
                     speakThisEvent = Person_left_quickly;
-                    stateStartMS = currentMS;
-                    currentState = hs_person_left;
                 } else {
                 if (timeInStateMS >= VALID_ENGAGEMENT_MS) {
                     // speak normal goodbye
                     speakThisEvent = Person_left_fov;
-                    stateStartMS = currentMS;
-                    currentState = hs_person_left;
                     }
                 }
             }
             break;
 
         case hs_too_close:
-            if (personTooClose) {
-                // stay in this state
-            } else {
-                if (hasDetection) {
+            if (hasDetection) {
+                if (!personTooClose) {
                     // speak nothing
-                    stateStartMS = currentMS;
                     currentState = hs_normal;
                 }
             }
 
             if (!hasDetection) {
+                stateStartMS = currentMS;
+                currentState = hs_person_left;
                 if (timeInStateMS < VALID_ENGAGEMENT_MS) {
                     // speak quick goodbye
                     speakThisEvent = Person_left_quickly;
-                    stateStartMS = currentMS;
-                    currentState = hs_person_left;
                 } else {
                     // speak normal goodbye
                     speakThisEvent = Person_left_fov;
-                    stateStartMS = currentMS;
-                    currentState = hs_person_left;
                     }
                 }
             }
@@ -282,7 +269,6 @@ void processEvents2(bool hasDetection, int distanceMM) {
                 } else {
                     // speak nothing
                     currentState = hs_idle;
-                    stateStartMS = currentMS;
                 }
             }
             break;
