@@ -14,6 +14,7 @@
  * (cc) Share Alike - Non Commercial - Attibution
  * 2022 Bob Glicksman and Jim Schrempp
  * 
+ *      Now using mouth state machine as the default algorithm
  * v2.0 added second speak function, invoked by cloud function "event algorithm" set to 2
  *      faster eyes sample rate from 25ms to 10ms
  *      altered some variable names in processEvents(). No function change 
@@ -47,8 +48,6 @@
 #include <TPP_Animatronic_Global.h>
 
 const String version = "2.0";
-int processEventFunction = 1;
-
 
 //SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);  // added this in an attempt to get the software timer to work. didn't help
@@ -103,6 +102,7 @@ animationList animation1;  // When doing a programmed animation, this is the lis
 #define R_LOWERLID_SERVO 5
 
 //------------- XXX processEvents ------------------
+////////// NO LONGER USED. TO BE REMOVED IN A FUTURE COMMIT
 // evaluate the TOF sensor results to determine if a mouth event is to be published, and publish the resulting event
 void processEvents(pointOfInterest POI) {
 
@@ -171,7 +171,7 @@ void processEvents(pointOfInterest POI) {
 
 }   // end of processEvents()
 
-void processEvents2(bool hasDetection, int distanceMM) {
+void processEventsStateMachine(bool hasDetection, int distanceMM) {
 
     enum headStates {
         hs_idle  = 1,
@@ -185,7 +185,7 @@ void processEvents2(bool hasDetection, int distanceMM) {
     // local constants
     const long TOO_CLOSE_MM = 254;  // object is too close if < 254 mm = 10"
     const unsigned long VALID_ENGAGEMENT_MS = 15000;   // 15 sec is the minimum time for a "valid" engagement
-    const long MIN_TIME_FOR_NEW_WELCOME = 30000;  // don't welcome more frequently than this
+    const long MIN_TIME_FOR_NEW_WELCOME = 5000;  // don't welcome more frequently than this
 
     // local variables
     bool personTooClose = false;
@@ -200,17 +200,22 @@ void processEvents2(bool hasDetection, int distanceMM) {
 
     switch(currentState) {
         case hs_idle:
-            if (hasDetection) {
+            if (!hasDetection ) {
+                // stay in this state
+            } else {
                 stateStartMS = currentMS;
                 if (personTooClose) {
                     // speak too close event
                     speakThisEvent = Person_too_close;
+                    // change state
                     currentState = hs_too_close;
                 } else {
                     // speak welcome event
                     speakThisEvent = Person_entered_fov;
+                    // change state
                     currentState = hs_normal;
                 }
+            }
             break;
 
         case hs_normal:
@@ -218,20 +223,28 @@ void processEvents2(bool hasDetection, int distanceMM) {
                 if (personTooClose) {
                     // speak too close
                     speakThisEvent = Person_too_close;
+                    // change state
                     currentState = hs_too_close;
-                } 
-            }
-            
-            if (!hasDetection) {
-                stateStartMS = currentMS;
-                currentState = hs_person_left;
+                } else {
+                    // stay in this state
+                }
+            } else {
+                // no detection
                 if (timeInStateMS < VALID_ENGAGEMENT_MS) {
                     // speak quick goodbye
                     speakThisEvent = Person_left_quickly;
+                    // reset timer
+                    stateStartMS = currentMS;
+                    // change state
+                    currentState = hs_person_left;
                 } else {
                 if (timeInStateMS >= VALID_ENGAGEMENT_MS) {
                     // speak normal goodbye
                     speakThisEvent = Person_left_fov;
+                    // reset timer
+                    stateStartMS = currentMS;
+                    // change state
+                    currentState = hs_person_left;
                     }
                 }
             }
@@ -239,22 +252,29 @@ void processEvents2(bool hasDetection, int distanceMM) {
 
         case hs_too_close:
             if (hasDetection) {
-                if (!personTooClose) {
+                if (!personTooClose) {  //xxx
                     // speak nothing
+                    // change state
                     currentState = hs_normal;
+                } else {
+                    // stay in this state
                 }
-            }
-
-            if (!hasDetection) {
-                stateStartMS = currentMS;
-                currentState = hs_person_left;
+            } else {
+                // no detection
                 if (timeInStateMS < VALID_ENGAGEMENT_MS) {
                     // speak quick goodbye
                     speakThisEvent = Person_left_quickly;
+                    // reset timer
+                    stateStartMS = currentMS;
+                    // change state
+                    currentState = hs_person_left;
                 } else {
                     // speak normal goodbye
                     speakThisEvent = Person_left_fov;
-                    }
+                    // reset timer
+                    stateStartMS = currentMS;
+                    // change state
+                    currentState = hs_person_left;
                 }
             }
             break;
@@ -262,12 +282,14 @@ void processEvents2(bool hasDetection, int distanceMM) {
         case hs_person_left:
             if (hasDetection) {
                 // speak nothing
-                currentState = hs_normal;
+                //currentState = hs_normal;
             } else {
+                // no detection
                 if (timeInStateMS < MIN_TIME_FOR_NEW_WELCOME ) {
                     // stay in this state so we don't welcome again
                 } else {
                     // speak nothing
+                    // change state
                     currentState = hs_idle;
                 }
             }
@@ -280,19 +302,19 @@ void processEvents2(bool hasDetection, int distanceMM) {
     if (speakThisEvent != No_event) {
         String eventTypeAsString = String(speakThisEvent);
         publishEvent("TOF_event", eventTypeAsString); 
-        mainLog.trace("2 Event sent: " + eventTypeAsString);
+        mainLog.trace("Event sent: " + eventTypeAsString);
     }
 
     // logging
     static headStates lastLoggedState;
     if (lastLoggedState != currentState) {
         lastLoggedState = currentState;
-        mainLog.trace("2 HeadState: " + headStatesStrings[currentState-1]);
+        mainLog.trace("HeadState: " + headStatesStrings[currentState-1]);
     }
 
     return;
 
-}   // end of processEvents2()
+}   // end of processEventsStateMachine()
 
 
 //------- midValue --------
@@ -351,14 +373,6 @@ int restartDevice(String extra) {
     return 0;
 }
 
-int setProcessEventFunction(String extra) {
-    if (extra.length() > 0){
-        processEventFunction = extra.toInt();
-         mainLog.trace("Using event function %d", processEventFunction);
-    }
-    return processEventFunction;
-}
-
 
 //------ setup -----------
 void setup() {
@@ -369,7 +383,6 @@ void setup() {
     pinMode(D7, OUTPUT);
 
     Particle.function("restart device", restartDevice);
-    Particle.function("event algorithm", setProcessEventFunction);
 
     delay(1000);
     mainLog.info("===========================================");
@@ -468,16 +481,13 @@ void loop() {
         theTOF.getPOITemporalFiltered(&thisPOITF);
 
         if (thisPOITF.gotNewSensorData) {
-            // call function to process the TOF data for event publication
-            if (processEventFunction == 2) {
-                // use alternative function
-                processEvents2(thisPOITF.hasDetection, thisPOITF.distanceMM);
-            } else {
-                processEvents(thisPOITF);
-            }
+           
+            // consider running the mouth
+            processEventsStateMachine(thisPOITF.hasDetection, thisPOITF.distanceMM);
+            
         }
 
-        //smallestValue = thisPOI.distanceMM;
+
         // get POI data without temporal filtering
         pointOfInterest thisPOI;
         theTOF.getPOI(&thisPOI);
