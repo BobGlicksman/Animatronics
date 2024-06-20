@@ -41,13 +41,14 @@ project to to determine how to properly scale (averaged) sample values to servo 
 ### B. Eyes
 
 1. We use an eye mechanism built from this project https://www.instructables.com/Simplified-3D-Printed-Animatronic-Dual-Eye-Mechani/
-of Nilheim Mechatronics.  They have a YouTube channel:  https://goo.gl/7Cle6h
+of Nilheim Mechatronics.  They have a YouTube channel:  https://goo.gl/7Cle6h   (In June 2024 Will released a new version of
+the 3D files that snaps together - no screws!  https://www.youtube.com/watch?v=uzPisRAmo2s )
 
-2. We will modify the eye mechanism as needed to suit our project. Changed STL files will be published in this GitHub repository.
+3. We will modify the eye mechanism as needed to suit our project. Changed STL files will be published in this GitHub repository.
 
-3. The mouth will have sensors used to detect people in the area of the puppet. The eyes will be triggered from the mouth mechanism to take action appropriate to a speaking person.
+4. The mouth will have sensors used to detect people in the area of the puppet. The eyes will be triggered from the mouth mechanism to take action appropriate to a speaking person.
 
-4. When not triggered by the mouth, the eyes will often be "asleep" but occasionally "wake" to look around.
+5. When not triggered by the mouth, the eyes will often be "asleep" but occasionally "wake" to look around.
 
 
 ## The overall project concept is:
