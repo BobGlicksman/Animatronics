@@ -1,4 +1,4 @@
-#OVERVIEW.
+# OVERVIEW.
 This project developed an animatronic head.  The head is capable of detecting and tracking motion in its field of view and of controlling
 an eye mechanism to "wake-up" and track this motion.  The head can also play various recorded voice clips and move its mouth to follow the 
 audio in a "convincing manner".  The head can detect various events and select an appropriate voice clip to play in response to the event.
