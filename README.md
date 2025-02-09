@@ -37,7 +37,7 @@ glued onto the mounting ears and the head pieces.  All CAD files for the laser c
 In order to explore using the complex eye mechanism to create realistic eye movement scenarios, a flexible software system was
 developed.
 
-1. **Scene:  A "scene" is the combination of the movements of the 6 eye servos to produce some specific effect, e.g. blink the eyes.
+1. **Scene:**  A "scene" is the combination of the movements of the 6 eye servos to produce some specific effect, e.g. blink the eyes.
 
 2. **Scenario:**  A "scenario" is a timed script of various scenes that produce some overall effect, e.g. a "sleepy dog" whose eyes 
 periodically open just a crack and the eyeballs move around to survey the landscape, and then the eyes close and the dog goes 
