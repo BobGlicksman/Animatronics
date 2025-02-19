@@ -3,3 +3,7 @@
 *.der
 .vscode/*
 target/*
+Software/Photonfirmware/AnimatronicMouthTest/target/*
+Software/Photonfirmware/AnimatronicMouthDemo/src/MN_Demo_Mouth.cpp
+Software/Photonfirmware/AnimatronicMouthDemo/target/*
+Software/Photonfirmware/AnimatronicMouthDemo/.vscode/*

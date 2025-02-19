@@ -1,0 +1,6 @@
+*.pem
+*.bin
+*.der
+src/MN_Demo_Mouth.cpp
+.vscode/*
+target/*
