@@ -33,10 +33,15 @@ extern SparkFun_VL53L5CX myImager;
 extern VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
 
 typedef struct {
+    bool gotNewSensorData;      
+    bool hasDetection;    // only true if there is a detection
     unsigned long detectedAtMS;
-    long distanceMM;
+    int distanceMM; 
     int x;
     int y;
+    int calibrationDistMM;
+    int surroundingHits;  // for debug. number of adjacent zones with good data
+    int surroundingAvg; // for debug. score from the zone avg function
 } pointOfInterest ;
 
 /*!
@@ -47,9 +52,10 @@ class TPP_TOF {
 public:
     void initTOF();
     void getPOI(pointOfInterest *pPOI);
+    void getPOITemporalFiltered(pointOfInterest *pPOI);
 
 private:
-    void prettyPrint(int32_t dataArray[]);
+    int prettyPrint(int32_t dataArray[]);
     void processMeasuredData(VL53L5CX_ResultsData measurementData, int32_t adjustedData[]);
     int  scoreZone(int location, int32_t dataArray[]);
     int  avgdistZone(int location, int32_t distance[]);
