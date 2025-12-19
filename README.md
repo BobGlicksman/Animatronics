@@ -5,6 +5,8 @@ This project developed an animatronic head.  The head is capable of detecting an
 an eye mechanism to "wake-up" and track this motion.  The head can also play various recorded voice clips and move its mouth to follow the 
 audio in a "convincing manner".  The head can detect various events and select an appropriate voice clip to play in response to the event.
 
+See the Overview document in the root folder of this repository for further details.
+
 ## Motivation.
 
 This project was designed to explore various aspects of animatronics, including three specific technologies:
@@ -104,7 +106,11 @@ coming too close to the head.  Other events might be explored in the future.
 
 1.  This README file.
 
-2.  License information.
+2.  A photo of the Head.
+
+3.  An Overview document describing this project in more detail.
+
+4.  License information.
 
 ## Data Folder.
 
@@ -114,8 +120,7 @@ they are not needed to implement the current animatronic head design.
 
 ## Documents Folder.
 
-This folder contains the documentation for this project including a User Manual and development related documentation to memorialize
-the R&D performed on this project.
+This folder contains the documentation for this project including several documents that detail the design, construction and operation of this project.
 
 ## Hardware Folder.
 
