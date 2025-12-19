@@ -100,7 +100,7 @@ of the eyes to focus on the closest subject area in space.
 respond to:  (a) person(s) entering the TOF field of view, (b) person(s) leaving the TOF field of view, (c) person(s)
 coming too close to the head.  Other events might be explored in the future.
 
-# WHAT IS IN TNIS REPOSITORY.
+# WHAT IS IN THIS REPOSITORY.
 
 ## Top Level.
 
@@ -139,7 +139,7 @@ components of this project.
 
 ## Software Folder.
 
-This folder contains source code for the two Particle Photon microcontrollers used on this project.  The source code includes
+This folder contains source code for the two Particle Photon 1 microcontrollers used on this project.  The source code includes
 the released operational code for each of the Photons, as well as some test and calibration code that needs to be used for
 construction and calibration of the animatronic head.
 
